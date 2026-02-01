@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Gallery - {{ event.title }}{% endblock %}
+{% block content %}
+
+<h1>Gallery: {{ event.title }}</h1>
+
+<p>
+  <a href="{% url 'event_detail' event.id %}">Back to event</a>
+  {% if user.is_authenticated %}
+    | <a href="{% url 'event_entry_create' event.id %}">Entry your vehicle</a>
+  {% endif %}
+</p>
+
+<p>
+    Voting:
+    <strong>
+        {% if event.is_active %}OPEN{% else %}CLOSED{% endif %}
+    </strong>
+    {% if event.ends_at %}
+        | Ends: {{ event.ends_at }}
+    {% endif %}
+    
+    {% if not event.is_active and event.winners_public %}
+    | <a href="{% url 'event_winners' event.id %}">Winners</a>
+    {% else %}
+    | <span style="opacity:0.6;">Winners (coming soon)</span>
+    {% endif %}
+</p>
+
+<hr>
+
+{% if entries %}
+  <h2>Top 3</h2>
+  <div style="
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap:16px;
+    margin-bottom:16px;
+  ">
+    {% for entry in entries|slice:":3" %}
+      <div style="border:2px solid #111; padding:10px; border-radius:10px;">
+        <div style="font-size:22px; font-weight:bold; margin-bottom:6px;">
+          {% if forloop.counter == 1 %}🥇 1st{% elif forloop.counter == 2 %}🥈 2nd{% else %}🥉 3rd{% endif %}
+        </div>
+
+        <a href="{% url 'vehicle_detail' entry.vehicle.id %}">
+          {% if entry.vehicle.images.all|length %}
+            <img src="{{ entry.vehicle.images.all.0.image.url }}"
+                 alt=""
+                 style="width:100%; height:200px; object-fit:cover; border-radius:8px;">
+          {% else %}
+            <div style="height:200px; background:#eee; border-radius:8px;"></div>
+          {% endif %}
+        </a>
+
+        <div style="margin-top:8px;">
+          <strong>{{ entry.vehicle.title }}</strong><br>
+          <small>{{ entry.vehicle.model.maker }} {{ entry.vehicle.model.name }}</small>
+        </div>
+
+        <div style="margin-top:6px;">
+          Votes: <strong>{{ entry.vote_count }}</strong>
+        </div>
+
+        <div style="margin-top:8px;">
+          {% if user.is_authenticated %}
+            {% if event.is_active %}
+              {% if entry.id in voted_entry_ids %}
+                <a href="{% url 'event_vote_toggle' event.id entry.id %}">Unvote</a>
+              {% else %}
+                <a href="{% url 'event_vote_toggle' event.id entry.id %}">Vote</a>
+              {% endif %}
+            {% else %}
+              <span style="opacity:0.6;">Voting closed</span>
+            {% endif %}
+          {% else %}
+            <a href="{% url 'login' %}?next={% url 'event_gallery' event.id %}">Login to vote</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <hr>
+{% endif %}
+
+
+<div style="
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap:16px;
+">
+  {% for entry in entries %}
+    <div style="border:1px solid #ddd; padding:10px; border-radius:8px;">
+
+        {% if forloop.counter <= 3 %}
+            <div style="font-size:18px; font-weight:bold; margin-bottom:6px;">
+            {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% else %}🥉{% endif %}
+            Top {{ forloop.counter }}
+            </div>
+        {% endif %}
+
+      <a href="{% url 'vehicle_detail' entry.vehicle.id %}">
+        {% if entry.vehicle.images.all|length %}
+          <img src="{{ entry.vehicle.images.all.0.image.url }}"
+               alt=""
+               style="width:100%; height:180px; object-fit:cover; border-radius:6px;">
+        {% else %}
+          <div style="height:180px; background:#eee; border-radius:6px;"></div>
+        {% endif %}
+      </a>
+
+      <div style="margin-top:8px;">
+        <strong>{{ entry.vehicle.title }}</strong><br>
+        <small>{{ entry.vehicle.model.maker }} {{ entry.vehicle.model.name }}</small>
+      </div>
+
+      <div style="margin-top:6px;">
+        Votes: <strong>{{ entry.vote_count }}</strong>
+      </div>
+
+      <div style="margin-top:8px;">
+        <a href="{% url 'vehicle_detail' entry.vehicle.id %}">Details</a>
+
+        {% if user.is_authenticated %}
+          {% if event.is_active %}
+            {% if entry.id in voted_entry_ids %}
+              | <a href="{% url 'event_vote_toggle' event.id entry.id %}">Unvote</a>
+            {% else %}
+              | <a href="{% url 'event_vote_toggle' event.id entry.id %}">Vote</a>
+            {% endif %}
+          {% else %}
+            | <span style="opacity:0.6;">Voting closed</span>
+          {% endif %}
+        {% else %}
+          | <a href="{% url 'login' %}?next={% url 'event_gallery' event.id %}">
+              Login to vote
+            </a>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <p>No entries yet.</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

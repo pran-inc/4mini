@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Award{% endblock %}
+{% block content %}
+<h1>{% if mode == "create" %}Add Award{% else %}Edit Award{% endif %} - {{ event.title }}</h1>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Save</button>
+</form>
+
+<p><a href="{% url 'event_awards_manage' event.id %}">Back</a></p>
+{% endblock %}

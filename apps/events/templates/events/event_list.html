@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Events{% endblock %}
+{% block content %}
+<h1>Events</h1>
+
+<p><a href="{% url 'event_create' %}">Create Event</a></p>
+
+<ul>
+  {% for e in events %}
+    <li>
+      <a href="{% url 'event_detail' e.id %}">{{ e.title }}</a>
+      <small>by {{ e.organizer.username }}</small>
+    </li>
+  {% empty %}
+    <li>No events yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

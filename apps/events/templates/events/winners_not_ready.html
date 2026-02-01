@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Winners - {{ event.title }}{% endblock %}
+{% block content %}
+
+<h1>Winners: {{ event.title }}</h1>
+
+<p>
+  <a href="{% url 'event_detail' event.id %}">Back to event</a>
+  | <a href="{% url 'event_gallery' event.id %}">Gallery</a>
+</p>
+
+<hr>
+
+{% if event.is_active %}
+  <h2>Not available yet</h2>
+  <p>Voting is still open. Winners will be published after voting ends.</p>
+  {% if event.ends_at %}
+    <p>Voting ends: <strong>{{ event.ends_at }}</strong></p>
+  {% endif %}
+{% else %}
+  <h2>Not published</h2>
+  <p>The organizer has not published the winners yet.</p>
+{% endif %}
+
+{% endblock %}

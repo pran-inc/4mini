@@ -1,0 +1,29 @@
+{% if event.sponsor_name %}
+  <div style="border:1px solid #ddd; padding:10px; border-radius:10px; margin:12px 0;">
+    <div style="font-weight:bold; margin-bottom:6px;">Sponsor</div>
+
+    <div style="display:flex; gap:12px; align-items:center;">
+      {% if event.sponsor_logo %}
+        <img src="{{ event.sponsor_logo.url }}" alt="" style="width:80px; height:80px; object-fit:contain;">
+      {% endif %}
+
+      <div>
+        {% if event.sponsor_url %}
+          <div>
+            <a href="{{ event.sponsor_url }}" target="_blank" rel="noopener">
+              {{ event.sponsor_name }}
+            </a>
+          </div>
+        {% else %}
+          <div>{{ event.sponsor_name }}</div>
+        {% endif %}
+
+        {% if event.sponsor_message %}
+          <div style="opacity:0.85; margin-top:4px;">
+            {{ event.sponsor_message|linebreaksbr }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endif %}

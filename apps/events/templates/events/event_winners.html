@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Winners - {{ event.title }}{% endblock %}
+{% block content %}
+
+<h1>Winners: {{ event.title }}</h1>
+
+{% include "events/_sponsor_block.html" %}
+
+<p>
+  <a href="{% url 'event_detail' event.id %}">Back to event</a>
+  | <a href="{% url 'event_gallery' event.id %}">Gallery</a>
+  {% if user.is_authenticated and user.id == event.organizer_id %}
+    | <a href="{% url 'event_awards_manage' event.id %}">Manage Awards</a>
+  {% endif %}
+</p>
+
+<p>
+  Organizer: {{ event.organizer.username }}<br>
+  Voting:
+  <strong>{% if event.is_active %}OPEN{% else %}CLOSED{% endif %}</strong>
+  {% if event.ends_at %} | Ends: {{ event.ends_at }}{% endif %}
+</p>
+
+<hr>
+
+<h2>Awards</h2>
+<ul>
+  {% for a in awards %}
+    <li style="margin-bottom:14px;">
+      <strong>{{ a.title }}</strong>
+      {% if a.description %}<div>{{ a.description|linebreaksbr }}</div>{% endif %}
+
+      {% if a.winner_entry %}
+        <div style="margin-top:6px;">
+          Winner:
+          <a href="{% url 'vehicle_detail' a.winner_entry.vehicle.id %}">
+            {{ a.winner_entry.vehicle.title }}
+          </a>
+          ({{ a.winner_entry.vehicle.model.maker }} {{ a.winner_entry.vehicle.model.name }})
+        </div>
+
+        {% if a.winner_entry.vehicle.images.all|length %}
+          <div style="margin-top:6px;">
+            <img src="{{ a.winner_entry.vehicle.images.all.0.image.url }}"
+                 alt=""
+                 style="width:360px; max-width:100%; height:220px; object-fit:cover;">
+          </div>
+        {% endif %}
+      {% else %}
+        <div><em>Winner not selected</em></div>
+      {% endif %}
+    </li>
+  {% empty %}
+    <li>No awards yet.</li>
+  {% endfor %}
+</ul>
+
+<hr>
+
+<h2>Top 3</h2>
+{% if top3 %}
+  <div style="
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap:16px;
+  ">
+    {% for entry in top3 %}
+      <div style="border:2px solid #111; padding:10px; border-radius:10px;">
+        <div style="font-size:22px; font-weight:bold; margin-bottom:6px;">
+          {% if forloop.counter == 1 %}🥇 1st{% elif forloop.counter == 2 %}🥈 2nd{% else %}🥉 3rd{% endif %}
+        </div>
+
+        <a href="{% url 'vehicle_detail' entry.vehicle.id %}">
+          {% if entry.vehicle.images.all|length %}
+            <img src="{{ entry.vehicle.images.all.0.image.url }}"
+                 alt=""
+                 style="width:100%; height:200px; object-fit:cover; border-radius:8px;">
+          {% else %}
+            <div style="height:200px; background:#eee; border-radius:8px;"></div>
+          {% endif %}
+        </a>
+
+        <div style="margin-top:8px;">
+          <strong>{{ entry.vehicle.title }}</strong><br>
+          <small>{{ entry.vehicle.model.maker }} {{ entry.vehicle.model.name }}</small>
+        </div>
+
+        <div style="margin-top:6px;">
+          Votes: <strong>{{ entry.vote_count }}</strong>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>No entries yet.</p>
+{% endif %}
+
+<hr>
+
+<h2>Full Ranking</h2>
+<ol>
+  {% for entry in entries %}
+    <li style="margin-bottom:8px;">
+      {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% endif %}
+      <a href="{% url 'vehicle_detail' entry.vehicle.id %}">{{ entry.vehicle.title }}</a>
+      — <strong>{{ entry.vote_count }}</strong> votes
+    </li>
+  {% empty %}
+    <li>No ranking yet.</li>
+  {% endfor %}
+</ol>
+
+{% endblock %}

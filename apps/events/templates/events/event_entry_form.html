@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Entry{% endblock %}
+{% block content %}
+<h1>Entry: {{ event.title }}</h1>
+
+<form method="post">
+  {% csrf_token %}
+
+  <p>Select your vehicle:</p>
+  {% for v in my_vehicles %}
+    <label style="display:block; margin-bottom:10px;">
+      <input type="radio" name="vehicle_id" value="{{ v.id }}">
+      {{ v.title }} ({{ v.model.maker }} {{ v.model.name }})
+      {% if v.images.all|length %}
+        - <img src="{{ v.images.all.0.image.url }}" width="120" alt="">
+      {% endif %}
+    </label>
+  {% empty %}
+    <p>No vehicles yet. <a href="{% url 'vehicle_create' %}">Add Vehicle</a></p>
+  {% endfor %}
+
+  <button type="submit">Entry</button>
+</form>
+{% endblock %}

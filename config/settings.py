@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     "apps.vehicles.apps.VehiclesConfig",
     "apps.posts.apps.PostsConfig",
     "apps.interactions.apps.InteractionsConfig",
+    "apps.events.apps.EventsConfig",
+
 ]
 
 MIDDLEWARE = [
@@ -66,9 +68,13 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.template.context_processors.media",
+                "django.template.context_processors.static",
+                "django.template.context_processors.tz",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
@@ -144,3 +150,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # settings.py
 SITE_ID = 1
+
+LOGIN_REDIRECT_URL = "/vehicles/"
+LOGOUT_REDIRECT_URL = "/vehicles/"

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }}{% endblock %}
+{% block content %}
+
+<h1>{{ event.title }}</h1>
+
+<p>
+  Voting:
+  <strong>
+    {% if event.is_active %}
+      OPEN
+    {% else %}
+      CLOSED
+    {% endif %}
+  </strong>
+  <br>
+  Starts: {{ event.starts_at }}
+  <br>
+  Ends:
+  {% if event.ends_at %}
+    {{ event.ends_at }}
+  {% else %}
+    <em>No end date</em>
+  {% endif %}
+</p>
+
+
+<p>{{ event.description|linebreaksbr }}</p>
+
+{% include "events/_sponsor_block.html" %}
+
+<p>
+  Organizer: {{ event.organizer.username }}
+  | <a href="{% url 'event_gallery' event.id %}">Open Gallery</a>
+  {% if user.is_authenticated %}
+    | <a href="{% url 'event_entry_create' event.id %}">Entry your vehicle</a>
+  {% else %}
+    | <a href="{% url 'login' %}?next={% url 'event_detail' event.id %}">Login to entry/vote</a>
+  {% endif %}
+  | <a href="{% url 'event_winners' event.id %}">Winners</a>
+</p>
+
+{% if user.is_authenticated and user.id == event.organizer_id %}
+  <p>
+    <a href="{% url 'event_edit' event.id %}">Edit Event</a>
+    | <a href="{% url 'event_awards_manage' event.id %}">Manage Awards</a>
+  </p>
+{% endif %}
+
+<hr>
+
+<!-- ================= -->
+<!-- ① IMAGE GRID -->
+<!-- ================= -->
+<h2>Entries</h2>
+
+<div style="
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap:16px;
+">
+  {% for entry in entries %}
+    <div style="border:1px solid #ccc; padding:8px;">
+      <a href="{% url 'vehicle_detail' entry.vehicle.id %}">
+        {% if entry.vehicle.images.all|length %}
+          <img src="{{ entry.vehicle.images.all.0.image.url }}"
+               alt=""
+               style="width:100%; height:160px; object-fit:cover;">
+        {% else %}
+          <div style="height:160px; background:#eee;"></div>
+        {% endif %}
+      </a>
+
+      <strong>{{ entry.vehicle.title }}</strong><br>
+      <small>{{ entry.vehicle.model.maker }} {{ entry.vehicle.model.name }}</small>
+
+      <div style="margin-top:6px;">
+        Votes: {{ entry.vote_count }}
+      </div>
+
+      {% if user.is_authenticated %}
+        {% if event.is_active %}
+          {% if entry.id in voted_entry_ids %}
+            <a href="{% url 'event_vote_toggle' event.id entry.id %}">Unvote</a>
+          {% else %}
+            <a href="{% url 'event_vote_toggle' event.id entry.id %}">Vote</a>
+          {% endif %}
+        {% else %}
+          <span style="opacity:0.6;">Voting closed</span>
+        {% endif %}
+      {% endif %}
+
+    </div>
+  {% empty %}
+    <p>No entries yet.</p>
+  {% endfor %}
+</div>
+
+<hr>
+
+<h2>Awards</h2>
+<ul>
+  {% for a in event.awards.all %}
+    <li style="margin-bottom:10px;">
+      <strong>{{ a.title }}</strong>
+      {% if a.description %}<div>{{ a.description|linebreaksbr }}</div>{% endif %}
+      <div>
+        {% if a.winner_entry %}
+          Winner:
+          <a href="{% url 'vehicle_detail' a.winner_entry.vehicle.id %}">
+            {{ a.winner_entry.vehicle.title }}
+          </a>
+          ({{ a.winner_entry.vehicle.model.maker }} {{ a.winner_entry.vehicle.model.name }})
+        {% else %}
+          <em>Winner not selected</em>
+        {% endif %}
+      </div>
+    </li>
+  {% empty %}
+    <li>No awards yet.</li>
+  {% endfor %}
+</ul>
+
+{% if user.is_authenticated and user.id == event.organizer_id %}
+  <p><a href="{% url 'event_awards_manage' event.id %}">Manage Awards</a></p>
+{% endif %}
+
+<hr>
+
+<!-- ================= -->
+<!-- ② RANKING -->
+<!-- ================= -->
+<h2>Ranking</h2>
+
+<ol>
+  {% for entry in entries %}
+    <li>
+      {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% endif %}
+      {{ entry.vehicle.title }} — {{ entry.vote_count }} votes
+    </li>
+  {% empty %}
+    <li>No ranking yet.</li>
+  {% endfor %}
+</ol>
+
+{% endblock %}

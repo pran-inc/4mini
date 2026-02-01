@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Awards - {{ event.title }}{% endblock %}
+{% block content %}
+<h1>Awards: {{ event.title }}</h1>
+
+<p>
+  <a href="{% url 'event_detail' event.id %}">Back to event</a> |
+  <a href="{% url 'award_create' event.id %}">Add Award</a>
+</p>
+
+<ul>
+  {% for a in awards %}
+    <li style="margin-bottom:12px;">
+      <strong>{{ a.title }}</strong>
+      {% if a.description %}<div>{{ a.description|linebreaksbr }}</div>{% endif %}
+
+      <div>
+        Winner:
+        {% if a.winner_entry %}
+          <a href="{% url 'vehicle_detail' a.winner_entry.vehicle.id %}">
+            {{ a.winner_entry.vehicle.title }}
+          </a>
+          ({{ a.winner_entry.vehicle.model.maker }} {{ a.winner_entry.vehicle.model.name }})
+        {% else %}
+          <em>Not selected</em>
+        {% endif %}
+      </div>
+
+      <div>
+        <a href="{% url 'award_edit' event.id a.id %}">Edit</a>
+        |
+        <a href="{% url 'award_delete' event.id a.id %}">Delete</a>
+      </div>
+    </li>
+  {% empty %}
+    <li>No awards yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Delete Award{% endblock %}
+{% block content %}
+<h1>Delete Award</h1>
+<p>Are you sure you want to delete: <strong>{{ award.title }}</strong> ?</p>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit">Delete</button>
+</form>
+
+<p><a href="{% url 'event_awards_manage' event.id %}">Cancel</a></p>
+{% endblock %}
