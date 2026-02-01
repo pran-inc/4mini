@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Posts{% endblock %}
+{% block content %}
+<h1>Posts</h1>
+
+<ul>
+  {% for p in posts %}
+    <li>
+      <a href="{% url 'post_detail' p.id %}">{{ p.title }}</a>
+      {% if p.vehicle %} - {{ p.vehicle.title }}{% endif %}
+      {% if p.images.all|length %}
+        - <img src="{{ p.images.all.0.image.url }}" width="120" alt="">
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

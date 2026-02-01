@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Vehicles{% endblock %}
+{% block content %}
+<h1>Vehicles</h1>
+
+<ul>
+  {% for v in vehicles %}
+    <li>
+      <a href="{% url 'vehicle_detail' v.id %}">{{ v.title }}</a>
+      ({{ v.model.maker }} {{ v.model.name }})
+      {% if v.images.all|length %}
+        - <img src="{{ v.images.all.0.image.url }}" width="120" alt="">
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

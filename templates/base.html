@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Cub Meet{% endblock %}</title>
+</head>
+<body>
+  <nav>
+    <a href="/vehicles/">Vehicles</a> |
+    <a href="/posts/">Posts</a> |
+    <a href="/vehicles/new/">Add Vehicle</a> |
+    <a href="/posts/new/">Add Post</a>
+  </nav>
+  <hr>
+  {% block content %}{% endblock %}
+</body>
+</html>

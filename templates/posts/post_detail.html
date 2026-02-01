@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }}{% endblock %}
+{% block content %}
+<h1>{{ post.title }}</h1>
+<p>by {{ post.author.username }} {% if post.vehicle %} / {{ post.vehicle.title }}{% endif %}</p>
+
+<div>
+  <button class="js-react" data-reaction="like"
+          data-app="{{ target.app_label }}" data-model="{{ target.model }}" data-object-id="{{ target.object_id }}">
+    👍 Like <span class="js-count">{{ like_count }}</span>
+  </button>
+
+  <button class="js-react" data-reaction="favorite"
+          data-app="{{ target.app_label }}" data-model="{{ target.model }}" data-object-id="{{ target.object_id }}">
+    ⭐ Favorite <span class="js-count">{{ fav_count }}</span>
+  </button>
+</div>
+
+<div>{{ post.body|linebreaksbr }}</div>
+
+<h2>Images</h2>
+{% for img in post.images.all %}
+  <img src="{{ img.image.url }}" width="240" alt="">
+{% endfor %}
+
+<script>
+function getCookie(name) {
+  const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return v ? v.pop() : '';
+}
+
+document.querySelectorAll(".js-react").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const payload = {
+      app_label: btn.dataset.app,
+      model: btn.dataset.model,
+      object_id: btn.dataset.objectId,
+      reaction_type: btn.dataset.reaction,
+    };
+
+    const res = await fetch("/reactions/toggle/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      alert("ログインが必要か、エラーが発生しました");
+      return;
+    }
+
+    const data = await res.json();
+    btn.querySelector(".js-count").textContent = data.count;
+    btn.style.opacity = data.active ? "1.0" : "0.6";
+  });
+});
+</script>
+{% endblock %}
