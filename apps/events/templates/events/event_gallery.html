@@ -19,7 +19,7 @@
     {% if event.ends_at %}
         | Ends: {{ event.ends_at }}
     {% endif %}
-    
+
     {% if not event.is_active and event.winners_public %}
     | <a href="{% url 'event_winners' event.id %}">Winners</a>
     {% else %}
@@ -44,13 +44,29 @@
         </div>
 
         <a href="{% url 'vehicle_detail' entry.vehicle.id %}">
-          {% if entry.vehicle.images.all|length %}
+          {% comment %} {% if entry.vehicle.images.all|length %}
             <img src="{{ entry.vehicle.images.all.0.image.url }}"
                  alt=""
                  style="width:100%; height:200px; object-fit:cover; border-radius:8px;">
           {% else %}
             <div style="height:200px; background:#eee; border-radius:8px;"></div>
-          {% endif %}
+          {% endif %} {% endcomment %}
+
+            {% with img=entry.vehicle.images.all.0 %}
+            {% if img %}
+                {% if img.thumb %}
+                <img src="{{ img.thumb.url }}"
+                    alt=""
+                    style="width:100%; height:180px; object-fit:cover; border-radius:6px;">
+                {% else %}
+                <img src="{{ img.image.url }}"
+                    alt=""
+                    style="width:100%; height:180px; object-fit:cover; border-radius:6px;">
+                {% endif %}
+            {% else %}
+                <div style="height:180px; background:#eee; border-radius:6px;"></div>
+            {% endif %}
+            {% endwith %}
         </a>
 
         <div style="margin-top:8px;">

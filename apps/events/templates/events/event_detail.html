@@ -62,13 +62,22 @@
   {% for entry in entries %}
     <div style="border:1px solid #ccc; padding:8px;">
       <a href="{% url 'vehicle_detail' entry.vehicle.id %}">
-        {% if entry.vehicle.images.all|length %}
+        {% comment %} {% if entry.vehicle.images.all|length %}
           <img src="{{ entry.vehicle.images.all.0.image.url }}"
                alt=""
                style="width:100%; height:160px; object-fit:cover;">
         {% else %}
           <div style="height:160px; background:#eee;"></div>
-        {% endif %}
+        {% endif %} {% endcomment %}
+        {% with img=a.winner_entry.vehicle.images.all.0 %}
+          {% if img %}
+            {% if img.thumb %}
+              <img src="{{ img.thumb.url }}" alt="" style="width:360px; max-width:100%; height:220px; object-fit:cover;">
+            {% else %}
+              <img src="{{ img.image.url }}" alt="" style="width:360px; max-width:100%; height:220px; object-fit:cover;">
+            {% endif %}
+          {% endif %}
+        {% endwith %}
       </a>
 
       <strong>{{ entry.vehicle.title }}</strong><br>

@@ -1,7 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.vehicles.models import UserVehicle
@@ -10,6 +9,10 @@ from .models import Event, EventEntry, EventVote
 from django.http import HttpResponseForbidden
 from .models import Award  # 追加
 from .forms import AwardForm  # 追加
+from django.db.models import Prefetch
+from apps.vehicles.models import VehicleImage
+from django.db.models import Count, Prefetch
+from apps.vehicles.models import VehicleImage
 
 def event_list(request):
     events = Event.objects.filter(is_published=True).order_by("-created_at")
@@ -77,10 +80,12 @@ def event_edit(request, event_id: int):
 def event_gallery(request, event_id: int):
     event = get_object_or_404(Event.objects.select_related("organizer"), id=event_id)
 
+    image_qs = VehicleImage.objects.order_by("-is_main", "sort_order", "id")
+
     entries = (
         EventEntry.objects.filter(event=event)
         .select_related("vehicle", "vehicle__model", "vehicle__owner")
-        .prefetch_related("vehicle__images")
+        .prefetch_related(Prefetch("vehicle__images", queryset=image_qs))
         .annotate(vote_count=Count("votes"))
         .order_by("-vote_count", "-created_at")
     )

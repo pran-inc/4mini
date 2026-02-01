@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Edit Vehicle{% endblock %}
+{% block content %}
+<h1>Edit Vehicle</h1>
+
+<p><a href="{% url 'vehicle_detail' vehicle.id %}">Back</a></p>
+
+<form method="post" enctype="multipart/form-data" id="vehicle-edit-form">
+  {% csrf_token %}
+
+  {{ form.as_p }}
+
+  <h2>Images</h2>
+  <p style="opacity:0.8;">ドラッグで並び替え／メイン画像を選択／削除チェックも可能（最大10枚）</p>
+
+  <!-- 並び順の送信 -->
+  <input type="hidden" name="image_order_json" id="image_order_json" value="[]">
+
+  <div id="image-grid" style="
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap:12px;
+    margin-bottom:12px;
+  ">
+    {% for img in vehicle.images.all %}
+      <div class="img-card" draggable="true" data-id="{{ img.id }}" style="
+        border:1px solid #ddd; padding:8px; border-radius:10px;
+        background:#fff;
+      ">
+        <img src="{{ img.image.url }}" alt="" style="width:100%; height:140px; object-fit:cover; border-radius:8px;">
+
+        <div style="margin-top:6px; display:flex; justify-content:space-between; gap:8px; align-items:center;">
+          <label style="font-size:12px;">
+            <input type="radio" name="main_image_id" value="{{ img.id }}" {% if img.is_main %}checked{% endif %}>
+            Main
+          </label>
+
+          <label style="font-size:12px;">
+            <input type="checkbox" name="delete_image_ids" value="{{ img.id }}">
+            Delete
+          </label>
+        </div>
+
+        <div style="opacity:0.6; font-size:11px; margin-top:4px;">
+          Drag to reorder
+        </div>
+      </div>
+    {% empty %}
+      <p>No images yet.</p>
+    {% endfor %}
+  </div>
+
+  <h3>Add Images</h3>
+  <p>{{ form.images.help_text }}</p>
+  {{ form.images.errors }}
+  {{ form.images }}
+
+  <div style="margin-top:16px;">
+    <button type="submit">Save</button>
+  </div>
+</form>
+
+<script>
+(function() {
+  const grid = document.getElementById("image-grid");
+  const orderInput = document.getElementById("image_order_json");
+  const form = document.getElementById("vehicle-edit-form");
+
+  if (!grid) return;
+
+  let dragged = null;
+
+  function serializeOrder() {
+    const ids = Array.from(grid.querySelectorAll(".img-card")).map(el => Number(el.dataset.id));
+    orderInput.value = JSON.stringify(ids);
+  }
+
+  // 初期の並び順をセット
+  serializeOrder();
+
+  grid.addEventListener("dragstart", (e) => {
+    const card = e.target.closest(".img-card");
+    if (!card) return;
+    dragged = card;
+    e.dataTransfer.effectAllowed = "move";
+  });
+
+  grid.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    const over = e.target.closest(".img-card");
+    if (!over || !dragged || over === dragged) return;
+
+    const rect = over.getBoundingClientRect();
+    const after = (e.clientY - rect.top) > (rect.height / 2);
+    if (after) {
+      over.after(dragged);
+    } else {
+      over.before(dragged);
+    }
+  });
+
+  grid.addEventListener("dragend", () => {
+    dragged = null;
+    serializeOrder();
+  });
+
+  // 送信直前にも最新順序を入れる
+  form.addEventListener("submit", () => {
+    serializeOrder();
+  });
+})();
+</script>
+{% endblock %}

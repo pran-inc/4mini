@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 from apps.vehicles.models import UserVehicle
+from apps.common.upload import upload_post_image
+from apps.common.images import compress_image_field
 
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -23,10 +25,14 @@ class Post(models.Model):
         return self.title
 
 class PostImage(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to="posts/%Y/%m/")
+    post = models.ForeignKey("Post", on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to=upload_post_image)
     sort_order = models.PositiveIntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["sort_order", "id"]
+
+    def save(self, *args, **kwargs):
+        if self.image and getattr(self.image, "file", None):
+            compress_image_field(self.image, max_side=1600)
+        super().save(*args, **kwargs)
