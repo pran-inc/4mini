@@ -11,25 +11,70 @@
 
 <hr>
 
-<!-- メイン画像（is_main優先でprefetch済みなら all.0 がメイン） -->
-{% if vehicle.images.all|length %}
-  <div>
-    <img src="{{ vehicle.images.all.0.image.url }}"
+<!-- ========================= -->
+<!-- メイン画像：サムネクリックで差し替え -->
+<!-- ========================= -->
+{% if vehicle.main_image %}
+  <div style="max-width:720px;">
+    <img id="js-main-image"
+         src="{{ vehicle.main_image.image.url }}"
          alt=""
-         style="width:100%; max-width:720px; height:420px; object-fit:cover; border-radius:12px;">
-  </div>
+         style="width:100%; height:420px; object-fit:cover; border-radius:12px;">
 
-  {% if vehicle.images.all|length > 1 %}
-    <div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:10px;">
-      {% for img in vehicle.images.all|slice:"1:" %}
-        <img src="{{ img.image.url }}" alt=""
-             style="width:140px; height:100px; object-fit:cover; border-radius:10px;">
-      {% endfor %}
-    </div>
-  {% endif %}
+    <!-- サムネ -->
+    {% if vehicle.images.all|length %}
+      <div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:10px;">
+        {% for img in vehicle.images.all %}
+          {% if img.thumb %}
+            <img class="js-thumb"
+                 src="{{ img.thumb.url }}"
+                 data-full="{{ img.image.url }}"
+                 alt=""
+                 style="width:140px; height:100px; object-fit:cover; border-radius:10px; cursor:pointer;
+                        border:2px solid {% if img.id == vehicle.main_image_id %}#111{% else %}transparent{% endif %};">
+          {% else %}
+            <img class="js-thumb"
+                 src="{{ img.image.url }}"
+                 data-full="{{ img.image.url }}"
+                 alt=""
+                 style="width:140px; height:100px; object-fit:cover; border-radius:10px; cursor:pointer;
+                        border:2px solid {% if img.id == vehicle.main_image_id %}#111{% else %}transparent{% endif %};">
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
 {% else %}
   <p>No images.</p>
 {% endif %}
+
+<script>
+(function() {
+  const mainImg = document.getElementById("js-main-image");
+  if (!mainImg) return;
+
+  const thumbs = document.querySelectorAll(".js-thumb");
+  if (!thumbs.length) return;
+
+  function clearBorders() {
+    thumbs.forEach(t => t.style.border = "2px solid transparent");
+  }
+
+  thumbs.forEach((thumb) => {
+    thumb.addEventListener("click", () => {
+      const full = thumb.dataset.full;
+      if (!full) return;
+
+      // メイン差し替え
+      mainImg.src = full;
+
+      // 選択枠の更新
+      clearBorders();
+      thumb.style.border = "2px solid #111";
+    });
+  });
+})();
+</script>
 
 <hr>
 
@@ -77,7 +122,7 @@
       const url = btn.dataset.url;
 
       const payload = new URLSearchParams();
-      payload.append("content_type", btn.dataset.type); // あなたのAPI仕様に合わせて
+      payload.append("content_type", btn.dataset.type);
       payload.append("object_id", btn.dataset.id);
       payload.append("reaction_type", btn.dataset.reaction);
 
@@ -101,12 +146,10 @@
 
       const data = await res.json();
 
-      // data.count を返す実装ならここで反映
       const countEl = btn.querySelector(".js-count");
       if (countEl && typeof data.count !== "undefined") {
         countEl.textContent = data.count;
       }
-      // data.active を返すなら見た目を変える
       if (typeof data.active !== "undefined") {
         btn.style.opacity = data.active ? "1.0" : "0.6";
       }

@@ -4,6 +4,10 @@
 <h1>{{ post.title }}</h1>
 <p>by {{ post.author.username }} {% if post.vehicle %} / {{ post.vehicle.title }}{% endif %}</p>
 
+{% if user.is_authenticated and user.id == post.author_id %}
+  <p><a href="{% url 'post_edit' post.id %}">Edit post</a></p>
+{% endif %}
+
 <div>
   <button class="js-react" data-reaction="like"
           data-app="{{ target.app_label }}" data-model="{{ target.model }}" data-object-id="{{ target.object_id }}">

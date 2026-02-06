@@ -11,6 +11,9 @@
     <a href="/posts/">Posts</a> |
     <a href="/vehicles/new/">Add Vehicle</a> |
     <a href="/posts/new/">Add Post</a> |
+    <a href="{% url 'favorite_list' %}">Favorites</a>
+    <a href="{% url 'mypage' %}">MyPage</a>
+
     {% if user.is_authenticated %}
       Hello, {{ user.username }} |
       <form action="{% url 'logout' %}" method="post" style="display:inline;">
@@ -20,9 +23,6 @@
     {% else %}
       <a href="{% url 'login' %}">Login</a> |
       <a href="{% url 'signup' %}">Sign up</a>
-    {% endif %}
-    {% if user.is_authenticated %}
-      | <a href="{% url 'my_vehicles' %}">My Page</a>
     {% endif %}
     | <a href="{% url 'event_list' %}">Events</a>
 

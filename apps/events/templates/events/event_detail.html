@@ -6,16 +6,8 @@
 
 <p>
   Voting:
-  <strong>
-    {% if event.is_active %}
-      OPEN
-    {% else %}
-      CLOSED
-    {% endif %}
-  </strong>
-  <br>
-  Starts: {{ event.starts_at }}
-  <br>
+  <strong>{% if event.is_active %}OPEN{% else %}CLOSED{% endif %}</strong><br>
+  Starts: {{ event.starts_at }}<br>
   Ends:
   {% if event.ends_at %}
     {{ event.ends_at }}
@@ -24,7 +16,6 @@
   {% endif %}
 </p>
 
-
 <p>{{ event.description|linebreaksbr }}</p>
 
 {% include "events/_sponsor_block.html" %}
@@ -32,12 +23,18 @@
 <p>
   Organizer: {{ event.organizer.username }}
   | <a href="{% url 'event_gallery' event.id %}">Open Gallery</a>
+
   {% if user.is_authenticated %}
     | <a href="{% url 'event_entry_create' event.id %}">Entry your vehicle</a>
   {% else %}
     | <a href="{% url 'login' %}?next={% url 'event_detail' event.id %}">Login to entry/vote</a>
   {% endif %}
-  | <a href="{% url 'event_winners' event.id %}">Winners</a>
+
+  {% if not event.is_active and event.winners_public %}
+    | <a href="{% url 'event_winners' event.id %}">Winners</a>
+  {% else %}
+    | <span style="opacity:0.6;">Winners (coming soon)</span>
+  {% endif %}
 </p>
 
 {% if user.is_authenticated and user.id == event.organizer_id %}
@@ -49,9 +46,6 @@
 
 <hr>
 
-<!-- ================= -->
-<!-- ① IMAGE GRID -->
-<!-- ================= -->
 <h2>Entries</h2>
 
 <div style="
@@ -62,22 +56,19 @@
   {% for entry in entries %}
     <div style="border:1px solid #ccc; padding:8px;">
       <a href="{% url 'vehicle_detail' entry.vehicle.id %}">
-        {% comment %} {% if entry.vehicle.images.all|length %}
-          <img src="{{ entry.vehicle.images.all.0.image.url }}"
-               alt=""
-               style="width:100%; height:160px; object-fit:cover;">
+        {% if entry.vehicle.main_image %}
+          {% if entry.vehicle.main_image.thumb %}
+            <img src="{{ entry.vehicle.main_image.thumb.url }}"
+                 alt=""
+                 style="width:100%; height:160px; object-fit:cover;">
+          {% else %}
+            <img src="{{ entry.vehicle.main_image.image.url }}"
+                 alt=""
+                 style="width:100%; height:160px; object-fit:cover;">
+          {% endif %}
         {% else %}
           <div style="height:160px; background:#eee;"></div>
-        {% endif %} {% endcomment %}
-        {% with img=a.winner_entry.vehicle.images.all.0 %}
-          {% if img %}
-            {% if img.thumb %}
-              <img src="{{ img.thumb.url }}" alt="" style="width:360px; max-width:100%; height:220px; object-fit:cover;">
-            {% else %}
-              <img src="{{ img.image.url }}" alt="" style="width:360px; max-width:100%; height:220px; object-fit:cover;">
-            {% endif %}
-          {% endif %}
-        {% endwith %}
+        {% endif %}
       </a>
 
       <strong>{{ entry.vehicle.title }}</strong><br>
@@ -98,7 +89,6 @@
           <span style="opacity:0.6;">Voting closed</span>
         {% endif %}
       {% endif %}
-
     </div>
   {% empty %}
     <p>No entries yet.</p>
@@ -136,11 +126,7 @@
 
 <hr>
 
-<!-- ================= -->
-<!-- ② RANKING -->
-<!-- ================= -->
 <h2>Ranking</h2>
-
 <ol>
   {% for entry in entries %}
     <li>

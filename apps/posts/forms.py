@@ -60,3 +60,13 @@ class PostForm(forms.ModelForm):
             self._pending_tags = tags
 
         return post
+
+    def save_m2m(self):
+        """
+        commit=False のときに溜めた tags を DB保存後に反映するための互換メソッド
+        """
+        tags = getattr(self, "_pending_tags", None)
+        if tags is not None:
+            # self.instance は super().save(commit=False) で作られた Post
+            self.instance.tags.set(tags)
+            delattr(self, "_pending_tags")

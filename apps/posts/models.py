@@ -21,6 +21,14 @@ class Post(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    main_image = models.ForeignKey(
+        "PostImage",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
     def __str__(self):
         return self.title
 

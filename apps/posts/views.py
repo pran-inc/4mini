@@ -5,26 +5,44 @@ from django.contrib.contenttypes.models import ContentType
 from apps.interactions.models import Reaction, ReactionType
 from .forms import PostForm
 from .models import Post, PostImage
+from django.db import transaction
+import json
+from django.contrib import messages
+from django.http import HttpResponseForbidden
+from django.db.models import Prefetch
+
+
+def _sync_post_main_image(post):
+    # 一番左（sort_order最小）がメイン
+    first = PostImage.objects.filter(post=post).order_by("sort_order", "id").first()
+
+    # is_main があるプロジェクトなら整合させる（無ければ無視）
+    try:
+        PostImage.objects.filter(post=post).update(is_main=False)
+        if first:
+            PostImage.objects.filter(post=post, id=first.id).update(is_main=True)
+    except Exception:
+        pass
+
+    post.main_image = first
+    post.save(update_fields=["main_image"])
 
 @login_required
 def post_create(request):
     if request.method == "POST":
-        print("FILES keys:", request.FILES.keys())
-        print("images:", request.FILES.getlist("images"))
-
-        form = PostForm(request.POST, request.FILES)  # ←ここが超重要
-
-        print("form errors:", form.errors)
-
+        form = PostForm(request.POST, request.FILES)
         if form.is_valid():
-            post = form.save(commit=False)
-            post.author = request.user
-            post.save()
-            form.save_m2m()
+            with transaction.atomic():
+                post = form.save(commit=False)
+                post.author = request.user
+                post.save()
+                form.save_m2m()  # ← tags_text を tags に反映
 
-            files = form.cleaned_data["images"]  # list が返る
-            for i, f in enumerate(files[:10]):
-                PostImage.objects.create(post=post, image=f, sort_order=i)
+                files = form.cleaned_data["images"]
+                for i, f in enumerate(files[:10]):
+                    PostImage.objects.create(post=post, image=f, sort_order=i)
+
+                _sync_post_main_image(post)  # ← leftmost を main に
 
             return redirect("post_detail", pk=post.pk)
     else:
@@ -32,10 +50,11 @@ def post_create(request):
 
     return render(request, "posts/post_form.html", {"form": form})
 
+
 def post_list(request):
     posts = (
-        Post.objects.select_related("author", "vehicle", "vehicle__model")
-        .prefetch_related("images", "tags")
+        Post.objects
+        .select_related("author", "main_image")  # 必要なら author
         .order_by("-created_at")
     )
     return render(request, "posts/post_list.html", {"posts": posts})
@@ -74,3 +93,87 @@ def post_detail(request, pk: int):
         "target": {"app_label": ct.app_label, "model": ct.model, "object_id": post.id},
     }
     return render(request, "posts/post_detail.html", ctx)
+
+@login_required
+def post_edit(request, pk: int):
+    post = get_object_or_404(
+        Post.objects.select_related("author", "main_image").prefetch_related("images", "tags"),
+        pk=pk
+    )
+    if post.author_id != request.user.id:
+        return HttpResponseForbidden("Not allowed")
+
+    if request.method == "POST":
+        form = PostForm(request.POST, request.FILES, instance=post)
+        if form.is_valid():
+            with transaction.atomic():
+                post = form.save(commit=False)
+                post.save()
+                form.save_m2m()
+
+                # 1) 既存画像の削除
+                delete_ids = request.POST.getlist("delete_image_ids")
+                if delete_ids:
+                    PostImage.objects.filter(post=post, id__in=delete_ids).delete()
+
+                # 2) 追加画像（最大10枚：既存枚数を見て残りだけ追加）
+                current_count = PostImage.objects.filter(post=post).count()
+                files = form.cleaned_data["images"]  # list[UploadedFile]
+                remaining = max(0, 10 - current_count)
+
+                for i, f in enumerate(files[:remaining]):
+                    PostImage.objects.create(
+                        post=post,
+                        image=f,
+                        sort_order=current_count + i,
+                    )
+
+                # 3) 並び順を反映（hiddenの image_order_json を読む）
+                order_json = request.POST.get("image_order_json", "")
+                if order_json:
+                    try:
+                        ordered_ids = json.loads(order_json)
+                        if isinstance(ordered_ids, list):
+                            valid_ids = list(
+                                PostImage.objects.filter(post=post, id__in=ordered_ids)
+                                .values_list("id", flat=True)
+                            )
+                            valid_set = set(valid_ids)
+
+                            sort = 0
+                            for img_id in ordered_ids:
+                                if img_id in valid_set:
+                                    PostImage.objects.filter(post=post, id=img_id).update(sort_order=sort)
+                                    sort += 1
+
+                            leftovers = (
+                                PostImage.objects.filter(post=post)
+                                .exclude(id__in=valid_set)
+                                .order_by("sort_order", "id")
+                                .values_list("id", flat=True)
+                            )
+                            for img_id in leftovers:
+                                PostImage.objects.filter(post=post, id=img_id).update(sort_order=sort)
+                                sort += 1
+                    except Exception:
+                        pass
+
+                # 4) 左端＝メインに同期（ここで1回だけ）
+                _sync_post_main_image(post)
+
+            messages.success(request, "投稿を更新しました。")
+            return redirect("post_detail", pk=post.pk)
+    else:
+        form = PostForm(instance=post)
+
+    post = (
+        Post.objects
+        .select_related("author", "main_image")
+        .prefetch_related("images", "tags")
+        .get(pk=post.pk)
+    )
+
+    return render(request, "posts/post_edit.html", {
+        "form": form,
+        "post": post,
+    })

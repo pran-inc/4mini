@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Edit Vehicle{% endblock %}
+{% block title %}Edit Post{% endblock %}
 {% block content %}
-<h1>Edit Vehicle</h1>
+<h1>Edit Post</h1>
 
-<p><a href="{% url 'vehicle_detail' vehicle.id %}">Back</a></p>
+<p><a href="{% url 'post_detail' post.id %}">Back</a></p>
 
-<form method="post" enctype="multipart/form-data" id="vehicle-edit-form">
+<form method="post" enctype="multipart/form-data" id="post-edit-form">
   {% csrf_token %}
 
   {{ form.as_p }}
@@ -24,7 +24,7 @@
     gap:12px;
     margin-bottom:12px;
   ">
-    {% for img in vehicle.images.all %}
+    {% for img in post.images.all %}
       <div class="img-card"
            draggable="true"
            data-id="{{ img.id }}"
@@ -75,7 +75,7 @@
 (function() {
   const grid = document.getElementById("image-grid");
   const orderInput = document.getElementById("image_order_json");
-  const form = document.getElementById("vehicle-edit-form");
+  const form = document.getElementById("post-edit-form");
   if (!grid) return;
 
   let dragged = null;
@@ -92,13 +92,9 @@
   function paintMainUI() {
     const cs = cards();
     cs.forEach((c, idx) => {
-      // 左端だけ枠線＝メイン
       c.style.border = (idx === 0) ? "2px solid #111" : "2px solid #ddd";
-
       const badge = c.querySelector(".js-main-badge");
-      if (badge) {
-        badge.textContent = (idx === 0) ? "★ Main (leftmost)" : "";
-      }
+      if (badge) badge.textContent = (idx === 0) ? "★ Main (leftmost)" : "";
     });
   }
 
@@ -107,7 +103,6 @@
       const chk = card.querySelector("input.js-delete");
       if (!chk) return;
 
-      // 既存バッジ消す
       const old = card.querySelector(".js-delete-badge");
       if (old) old.remove();
 
@@ -131,12 +126,10 @@
     });
   }
 
-  // 初期
   serializeOrder();
   paintMainUI();
   paintDeleteState();
 
-  // Deleteチェック反映
   grid.addEventListener("change", (e) => {
     if (e.target && e.target.classList && e.target.classList.contains("js-delete")) {
       paintDeleteState();
@@ -149,7 +142,6 @@
     const card = e.target.closest(".img-card");
     if (!card) return;
 
-    // 削除予定はドラッグさせない
     const chk = card.querySelector("input.js-delete");
     if (chk && chk.checked) return;
 
@@ -162,7 +154,6 @@
     const over = e.target.closest(".img-card");
     if (!over || !dragged || over === dragged) return;
 
-    // 削除予定のカード上では並べ替えしない
     const overChk = over.querySelector("input.js-delete");
     if (overChk && overChk.checked) return;
 

@@ -22,35 +22,18 @@
       <a href="{% url 'vehicle_detail' v.id %}"
          style="text-decoration:none; color:inherit;">
 
-        {% if v.images.all|length %}
-          {% with img=v.images.all.0 %}
-            {% if img.thumb %}
-              <img src="{{ img.thumb.url }}"
-                   alt=""
-                   style="
-                     width:100%;
-                     height:160px;
-                     object-fit:cover;
-                     border-radius:12px;
-                   ">
-            {% else %}
-              <img src="{{ img.image.url }}"
-                   alt=""
-                   style="
-                     width:100%;
-                     height:160px;
-                     object-fit:cover;
-                     border-radius:12px;
-                   ">
-            {% endif %}
-          {% endwith %}
+        {% if v.main_image %}
+          {% if v.main_image.thumb %}
+            <img src="{{ v.main_image.thumb.url }}"
+                 alt=""
+                 style="width:100%; height:160px; object-fit:cover; border-radius:12px;">
+          {% else %}
+            <img src="{{ v.main_image.image.url }}"
+                 alt=""
+                 style="width:100%; height:160px; object-fit:cover; border-radius:12px;">
+          {% endif %}
         {% else %}
-          <div style="
-            width:100%;
-            height:160px;
-            background:#eee;
-            border-radius:12px;
-          "></div>
+          <div style="width:100%; height:160px; background:#eee; border-radius:12px;"></div>
         {% endif %}
 
         <div style="margin-top:10px;">

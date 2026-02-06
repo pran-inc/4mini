@@ -39,13 +39,19 @@
           ({{ a.winner_entry.vehicle.model.maker }} {{ a.winner_entry.vehicle.model.name }})
         </div>
 
-        {% if a.winner_entry.vehicle.images.all|length %}
-          <div style="margin-top:6px;">
-            <img src="{{ a.winner_entry.vehicle.images.all.0.image.url }}"
-                 alt=""
-                 style="width:360px; max-width:100%; height:220px; object-fit:cover;">
-          </div>
-        {% endif %}
+        <div style="margin-top:6px;">
+          {% if a.winner_entry.vehicle.main_image %}
+            {% if a.winner_entry.vehicle.main_image.thumb %}
+              <img src="{{ a.winner_entry.vehicle.main_image.thumb.url }}"
+                   alt=""
+                   style="width:360px; max-width:100%; height:220px; object-fit:cover;">
+            {% else %}
+              <img src="{{ a.winner_entry.vehicle.main_image.image.url }}"
+                   alt=""
+                   style="width:360px; max-width:100%; height:220px; object-fit:cover;">
+            {% endif %}
+          {% endif %}
+        </div>
       {% else %}
         <div><em>Winner not selected</em></div>
       {% endif %}
@@ -71,10 +77,16 @@
         </div>
 
         <a href="{% url 'vehicle_detail' entry.vehicle.id %}">
-          {% if entry.vehicle.images.all|length %}
-            <img src="{{ entry.vehicle.images.all.0.image.url }}"
-                 alt=""
-                 style="width:100%; height:200px; object-fit:cover; border-radius:8px;">
+          {% if entry.vehicle.main_image %}
+            {% if entry.vehicle.main_image.thumb %}
+              <img src="{{ entry.vehicle.main_image.thumb.url }}"
+                   alt=""
+                   style="width:100%; height:200px; object-fit:cover; border-radius:8px;">
+            {% else %}
+              <img src="{{ entry.vehicle.main_image.image.url }}"
+                   alt=""
+                   style="width:100%; height:200px; object-fit:cover; border-radius:8px;">
+            {% endif %}
           {% else %}
             <div style="height:200px; background:#eee; border-radius:8px;"></div>
           {% endif %}

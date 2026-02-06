@@ -1,17 +1,47 @@
 {% extends "base.html" %}
 {% block title %}Posts{% endblock %}
 {% block content %}
+
 <h1>Posts</h1>
 
-<ul>
+<ul style="
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap:16px;
+">
   {% for p in posts %}
-    <li>
-      <a href="{% url 'post_detail' p.id %}">{{ p.title }}</a>
-      {% if p.vehicle %} - {{ p.vehicle.title }}{% endif %}
-      {% if p.images.all|length %}
-        - <img src="{{ p.images.all.0.image.url }}" width="120" alt="">
-      {% endif %}
+    <li style="border:1px solid #ddd; border-radius:14px; padding:12px; background:#fff;">
+      <a href="{% url 'post_detail' p.id %}" style="text-decoration:none; color:inherit;">
+
+        {% if p.main_image %}
+          {% if p.main_image.thumb %}
+            <img src="{{ p.main_image.thumb.url }}" alt=""
+                 style="width:100%; height:160px; object-fit:cover; border-radius:12px;">
+          {% else %}
+            <img src="{{ p.main_image.image.url }}" alt=""
+                 style="width:100%; height:160px; object-fit:cover; border-radius:12px;">
+          {% endif %}
+        {% else %}
+          <div style="width:100%; height:160px; background:#eee; border-radius:12px;"></div>
+        {% endif %}
+
+        <div style="margin-top:10px;">
+          <div style="font-weight:bold; font-size:16px;">
+            {{ p.title }}
+          </div>
+          <div style="opacity:0.8; font-size:13px;">
+            {{ p.created_at }}
+          </div>
+        </div>
+
+      </a>
     </li>
+  {% empty %}
+    <li>No posts yet.</li>
   {% endfor %}
 </ul>
+
 {% endblock %}
