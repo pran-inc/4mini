@@ -1,0 +1,43 @@
+<form id="js-part-form" method="post" action="{% url 'vehicle_part_create' vehicle.id %}">
+  {% csrf_token %}
+
+  <p>
+    {{ form.category.label_tag }}<br>
+    {{ form.category }}
+    {{ form.category.errors }}
+  </p>
+
+  <div style="border:1px solid #eee; padding:12px; border-radius:10px; margin:10px 0;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <strong>部品</strong>
+
+      <label style="font-size:13px; user-select:none;">
+        <input type="checkbox" id="js-free-toggle">
+        <span id="js-free-toggle-label">自由入力にする</span>
+      </label>
+    </div>
+
+    <div id="js-part-select-wrap" style="margin-top:10px;">
+      {{ form.part.label_tag }}<br>
+      {{ form.part }}
+      {{ form.part.errors }}
+    </div>
+
+    <div id="js-part-free-wrap" style="margin-top:10px; display:none;">
+      {{ form.part_free_text.label_tag }}<br>
+      {{ form.part_free_text }}
+      {{ form.part_free_text.errors }}
+    </div>
+  </div>
+
+  <p>{{ form.maker.label_tag }}<br>{{ form.maker }}{{ form.maker.errors }}</p>
+  <p>{{ form.model_number.label_tag }}<br>{{ form.model_number }}{{ form.model_number.errors }}</p>
+  <p>{{ form.spec.label_tag }}<br>{{ form.spec }}{{ form.spec.errors }}</p>
+  <p>{{ form.note.label_tag }}<br>{{ form.note }}{{ form.note.errors }}</p>
+
+  {% if form.non_field_errors %}
+    <div style="color:#b00;">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <button type="submit">パーツ追加</button>
+</form>

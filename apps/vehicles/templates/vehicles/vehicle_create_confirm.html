@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Confirm Vehicle{% endblock %}
+{% block content %}
+
+<h1>登録内容の確認</h1>
+
+<div style="display:flex; gap:16px; align-items:flex-start; margin:16px 0;">
+  <div style="width:220px;">
+    {% if vehicle.main_image %}
+      {% if vehicle.main_image.thumb %}
+        <img src="{{ vehicle.main_image.thumb.url }}" alt="" style="width:100%; height:auto; border-radius:10px;">
+      {% else %}
+        <img src="{{ vehicle.main_image.image.url }}" alt="" style="width:100%; height:auto; border-radius:10px;">
+      {% endif %}
+    {% else %}
+      <div style="width:100%; aspect-ratio: 4/3; background:#eee; border-radius:10px;"></div>
+    {% endif %}
+  </div>
+
+  <div>
+    <p style="margin:0 0 10px 0;">
+      <strong>Model</strong><br>
+      {{ vehicle.model.maker }} {{ vehicle.model.name }}
+    </p>
+
+    <p style="margin:0 0 10px 0;">
+      <strong>Title</strong><br>
+      {{ vehicle.title }}
+    </p>
+
+    <form method="post" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+      {% csrf_token %}
+      <button type="submit" name="action" value="confirm">この内容で登録する</button>
+      <button type="submit" name="action" value="edit">修正する（編集へ）</button>
+
+      <button
+        type="submit"
+        name="action"
+        value="discard"
+        onclick="return confirm('この車両登録を破棄します。よろしいですか？');"
+        style="margin-left:auto;"
+      >
+        破棄する
+      </button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

@@ -2,6 +2,7 @@ from django import forms
 from django.utils import timezone
 from .models import Event
 from .models import Event, Award  # Award を追加
+from apps.teams.models import Team, TeamMembership, MembershipStatus, MembershipRole
 
 class EventForm(forms.ModelForm):
     class Meta:
@@ -11,11 +12,35 @@ class EventForm(forms.ModelForm):
             "starts_at", "ends_at",
             "is_published", "winners_public",
             "sponsor_name", "sponsor_url", "sponsor_logo", "sponsor_message",
+            "organizer_team",   # ✅ 追加
+
         ]
         widgets = {
             "starts_at": forms.DateTimeInput(attrs={"type": "datetime-local"}),
             "ends_at": forms.DateTimeInput(attrs={"type": "datetime-local"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+
+        # デフォルトは選べない
+        self.fields["organizer_team"].queryset = Team.objects.none()
+        self.fields["organizer_team"].required = False
+
+        if user and user.is_authenticated:
+            admin_team_ids = TeamMembership.objects.filter(
+                user=user,
+                is_active=True,
+                status=MembershipStatus.APPROVED,
+                role=MembershipRole.ADMIN,
+                team__is_active=True,
+            ).values_list("team_id", flat=True)
+
+            self.fields["organizer_team"].queryset = Team.objects.filter(
+                id__in=admin_team_ids,
+                is_active=True,
+            ).order_by("-created_at")
 
     def clean(self):
         cleaned = super().clean()

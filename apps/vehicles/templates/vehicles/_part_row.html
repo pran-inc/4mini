@@ -1,0 +1,21 @@
+<li data-part-id="{{ vp.id }}" style="border:1px solid #ddd; border-radius:10px; padding:10px; background:#fff;">
+  <div style="display:flex; justify-content:space-between; gap:10px;">
+    <div>
+      <strong>{{ vp.display_part_name }}</strong>
+      <div style="opacity:0.8; font-size:12px;">
+        {% if vp.maker %}{{ vp.maker.name }}{% endif %}
+        {% if vp.model_number %} / {{ vp.model_number }}{% endif %}
+        {% if vp.spec %} / {{ vp.spec }}{% endif %}
+      </div>
+      {% if vp.note %}
+        <div style="margin-top:6px; font-size:12px;">{{ vp.note|linebreaksbr }}</div>
+      {% endif %}
+    </div>
+
+    <button type="button"
+            class="js-part-delete"
+            data-url="{% url 'vehicle_part_delete' vp.vehicle_id vp.id %}">
+      削除
+    </button>
+  </div>
+</li>

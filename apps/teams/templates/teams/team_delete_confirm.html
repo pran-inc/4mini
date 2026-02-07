@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}My Team Invites{% endblock %}
+{% block content %}
+
+<h1>招待通知</h1>
+
+<ul>
+  {% for m in invites %}
+    <li style="margin-bottom:12px;">
+      <a href="{% url 'team_detail' m.team.id %}">{{ m.team.name }}</a>
+      （from {{ m.invited_by.username|default:"admin" }}）
+
+      <form method="post" action="{% url 'invite_accept' m.id %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit">承認</button>
+      </form>
+
+      <form method="post" action="{% url 'invite_decline' m.id %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit">辞退</button>
+      </form>
+    </li>
+  {% empty %}
+    <li>招待はありません。</li>
+  {% endfor %}
+</ul>
+
+{% endblock %}

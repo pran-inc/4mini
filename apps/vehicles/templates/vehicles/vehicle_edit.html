@@ -3,6 +3,19 @@
 {% block content %}
 <h1>Edit Vehicle</h1>
 
+<div style="margin: 12px 0 18px 0; padding: 12px 14px; background: #f6f7f9; border-radius: 10px;">
+  <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div>
+      <strong>Step2：詳細・画像・パーツ編集</strong><br>
+      <span style="color:#555;">ここで情報を充実させるほど、検索にも強くなります。</span>
+    </div>
+    <div>
+      <a href="{% url 'vehicle_detail' vehicle.id %}">公開ページを見る →</a>
+    </div>
+  </div>
+</div>
+
+
 <p><a href="{% url 'vehicle_detail' vehicle.id %}">Back</a></p>
 
 <form method="post" enctype="multipart/form-data" id="vehicle-edit-form">
@@ -70,6 +83,30 @@
     <button type="submit">Save</button>
   </div>
 </form>
+
+<p style="color:#777; font-size:0.95em; margin-top:10px;">
+  ※ 今日は途中まででもOK。保存すれば、続きは後で編集できます。
+</p>
+
+
+<hr>
+<h2>Parts</h2>
+
+<div id="js-part-form-wrap">
+  {% include "vehicles/_part_form.html" with form=part_form vehicle=vehicle %}
+</div>
+
+<ul id="js-part-list" style="list-style:none; padding:0; margin:12px 0; display:grid; gap:10px;">
+  {% for vp in vehicle_parts %}
+    {% include "vehicles/_part_row.html" with vp=vp %}
+  {% empty %}
+    <li style="opacity:0.7;">まだパーツがありません</li>
+  {% endfor %}
+</ul>
+
+<p style="margin-top:18px;">
+  <a href="{% url 'vehicle_delete_confirm' vehicle.id %}">この車両を削除</a>
+</p>
 
 <script>
 (function() {
@@ -187,5 +224,225 @@
   });
 })();
 </script>
+
+<script>
+(function(){
+  const wrap = document.getElementById("js-part-form-wrap");
+  const list = document.getElementById("js-part-list");
+  if (!wrap || !list) return;
+
+  function getCSRF() {
+    const el = wrap.querySelector('input[name="csrfmiddlewaretoken"]');
+    return el ? el.value : "";
+  }
+
+  // ======= Part form UI init (カテゴリ→候補→自由入力 自動ON+フォーカス) =======
+  function initPartForm(container) {
+    const categoryEl = container.querySelector("#id_category");
+    const partEl = container.querySelector("#id_part");
+    const freeEl = container.querySelector("#id_part_free_text");
+
+    const toggleEl = container.querySelector("#js-free-toggle");
+    const toggleLabelEl = container.querySelector("#js-free-toggle-label");
+    const selectWrap = container.querySelector("#js-part-select-wrap");
+    const freeWrap = container.querySelector("#js-part-free-wrap");
+
+    if (!categoryEl || !partEl || !freeEl || !toggleEl || !toggleLabelEl || !selectWrap || !freeWrap) return;
+
+    let lastPartCount = 0;
+    let focusFreeNext = false;
+
+    function lock(el, locked) {
+      el.disabled = !!locked;
+      el.style.opacity = locked ? "0.5" : "1.0";
+    }
+
+    function updateToggleLabel() {
+      const hasCategory = !!categoryEl.value;
+
+      if (!hasCategory) {
+        toggleLabelEl.textContent = "自由入力にする（カテゴリ選択後）";
+        return;
+      }
+      if (lastPartCount === 0) {
+        toggleLabelEl.textContent = "自由入力にする（候補なし：自動ON）";
+        return;
+      }
+      toggleLabelEl.textContent = "自由入力にする";
+    }
+
+    function applyModeUI() {
+      const hasCategory = !!categoryEl.value;
+      const isFree = !!toggleEl.checked;
+
+      lock(toggleEl, !hasCategory);
+
+      if (!hasCategory) {
+        toggleEl.checked = false;
+        selectWrap.style.display = "block";
+        freeWrap.style.display = "none";
+
+        partEl.value = "";
+        freeEl.value = "";
+
+        lock(partEl, true);
+        lock(freeEl, true);
+
+        updateToggleLabel();
+        return;
+      }
+
+      updateToggleLabel();
+
+      if (isFree) {
+        selectWrap.style.display = "none";
+        freeWrap.style.display = "block";
+
+        partEl.value = "";
+        lock(partEl, true);
+        lock(freeEl, false);
+
+        if (focusFreeNext) {
+          focusFreeNext = false;
+          setTimeout(() => { try { freeEl.focus(); } catch(e) {} }, 0);
+        }
+      } else {
+        selectWrap.style.display = "block";
+        freeWrap.style.display = "none";
+
+        freeEl.value = "";
+        lock(partEl, false);
+        lock(freeEl, true);
+      }
+    }
+
+    function setPartOptions(items) {
+      lastPartCount = items.length;
+
+      partEl.innerHTML = "";
+      const empty = document.createElement("option");
+      empty.value = "";
+      empty.textContent = "（部品を選択）";
+      partEl.appendChild(empty);
+
+      items.forEach((it) => {
+        const opt = document.createElement("option");
+        opt.value = String(it.id);
+        opt.textContent = it.name;
+        partEl.appendChild(opt);
+      });
+
+      freeEl.placeholder = (items.length > 0)
+        ? "（選択肢に無い場合のみ入力）"
+        : "（このカテゴリに部品が無いので自由入力してください）";
+
+      if (categoryEl.value && items.length === 0) {
+        toggleEl.checked = true;
+        partEl.value = "";
+        focusFreeNext = true;
+      }
+
+      applyModeUI();
+    }
+
+    async function fetchParts(categoryId) {
+      if (!categoryId) {
+        setPartOptions([]);
+        return;
+      }
+      const url = new URL("{% url 'api_parts_by_category' %}", window.location.origin);
+      url.searchParams.set("category_id", categoryId);
+
+      const res = await fetch(url.toString(), { headers: {"Accept":"application/json"} });
+      if (!res.ok) {
+        setPartOptions([]);
+        return;
+      }
+      const data = await res.json();
+      setPartOptions(data.results || []);
+    }
+
+    // bind (二重bind防止のため、既にbindしてたらスキップ)
+    if (!container.dataset.bound) {
+      container.dataset.bound = "1";
+
+      toggleEl.addEventListener("change", () => {
+        if (toggleEl.checked) focusFreeNext = true;
+        applyModeUI();
+      });
+
+      categoryEl.addEventListener("change", () => {
+        toggleEl.checked = false;
+        partEl.value = "";
+        freeEl.value = "";
+        focusFreeNext = false;
+        fetchParts(categoryEl.value);
+      });
+    }
+
+    // initial
+    fetchParts(categoryEl.value);
+  }
+
+  // 最初の描画で初期化
+  initPartForm(wrap);
+
+  // ======= AJAX: 追加 =======
+  document.addEventListener("submit", async (e) => {
+    const form = e.target.closest("#js-part-form");
+    if (!form) return;
+    e.preventDefault();
+
+    const url = form.getAttribute("action");
+    const body = new FormData(form);
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "X-CSRFToken": getCSRF() },
+      body,
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) {
+      wrap.innerHTML = data.form_html;
+      initPartForm(wrap); // ✅差し替え後に再初期化
+      return;
+    }
+
+    wrap.innerHTML = data.form_html;
+    initPartForm(wrap); // ✅差し替え後に再初期化
+
+    list.insertAdjacentHTML("afterbegin", data.row_html);
+
+    const empty = list.querySelector("li[style*='まだパーツ']");
+    if (empty) empty.remove();
+  });
+
+  // ======= AJAX: 削除 =======
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".js-part-delete");
+    if (!btn) return;
+
+    const url = btn.dataset.url;
+    const li = btn.closest("li[data-part-id]");
+    if (!url || !li) return;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "X-CSRFToken": getCSRF() },
+    });
+
+    const data = await res.json();
+    if (data.ok) {
+      li.remove();
+      if (!list.querySelector("li[data-part-id]")) {
+        list.insertAdjacentHTML("beforeend", "<li style='opacity:0.7;'>まだパーツがありません</li>");
+      }
+    }
+  });
+})();
+</script>
+
 
 {% endblock %}

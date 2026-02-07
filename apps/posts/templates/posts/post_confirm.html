@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Confirm Post{% endblock %}
+{% block content %}
+
+<h1>投稿内容の確認</h1>
+
+<div style="display:flex; gap:16px; align-items:flex-start; margin:16px 0;">
+  <div style="width:220px;">
+    {% if post.main_image %}
+      {% if post.main_image.thumb %}
+        <img src="{{ post.main_image.thumb.url }}" alt="" style="width:100%; height:auto; border-radius:10px;">
+      {% else %}
+        <img src="{{ post.main_image.image.url }}" alt="" style="width:100%; height:auto; border-radius:10px;">
+      {% endif %}
+    {% else %}
+      <div style="width:100%; aspect-ratio: 4/3; background:#eee; border-radius:10px;"></div>
+    {% endif %}
+  </div>
+
+  <div style="flex:1;">
+    <p style="margin:0 0 10px 0;">
+      <strong>Title</strong><br>
+      {{ post.title }}
+    </p>
+
+    <p style="margin:0 0 10px 0;">
+      <strong>Body</strong><br>
+      {{ post.body|linebreaksbr }}
+    </p>
+
+    <form method="post" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+      {% csrf_token %}
+      <button type="submit" name="action" value="confirm">この内容で投稿する</button>
+      <button type="submit" name="action" value="edit">修正する（編集へ）</button>
+
+      <button
+        type="submit"
+        name="action"
+        value="discard"
+        onclick="return confirm('この投稿を破棄します。よろしいですか？');"
+        style="margin-left:auto;"
+      >
+        破棄する
+      </button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

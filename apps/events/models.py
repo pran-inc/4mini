@@ -1,11 +1,30 @@
+# apps/events/models.py
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
 from apps.vehicles.models import UserVehicle
+from apps.teams.models import Team
+
 
 class Event(models.Model):
-    organizer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="events")
+    # 主催者（個人）
+    organizer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="events",
+    )
+
+    # ✅ チーム主催（任意）
+    organizer_team = models.ForeignKey(
+        Team,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="events",
+    )
+
     title = models.CharField(max_length=150)
     description = models.TextField(blank=True, default="")
 
@@ -61,15 +80,18 @@ class EventVote(models.Model):
             models.UniqueConstraint(fields=["event", "entry", "user"], name="unique_vote_per_entry_user")
         ]
 
+    def __str__(self):
+        return f"vote:{self.event_id}:{self.entry_id}:{self.user_id}"
+
+
 class Award(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="awards")
 
     title = models.CharField(max_length=100)  # 例: Best Custom
     description = models.TextField(blank=True, default="")
 
-    # 受賞車両（エントリー）が決まったら紐づける
     winner_entry = models.ForeignKey(
-        "EventEntry",
+        EventEntry,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

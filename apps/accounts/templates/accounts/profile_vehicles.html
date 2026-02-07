@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ display_name }} - Vehicles{% endblock %}
+{% block content %}
+
+<h1>
+  <a href="{% url 'profile_detail' profile_user.username %}">{{ display_name }}</a>
+  / Vehicles
+</h1>
+
+{% if is_me %}
+  <p><a href="{% url 'account_edit' %}">プロフィール編集</a></p>
+{% endif %}
+
+{% include "accounts/_pager.html" %}
+
+<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:14px;">
+  {% for v in page_obj.object_list %}
+    <div style="border:1px solid #ddd; border-radius:10px; overflow:hidden;">
+      <a href="{% url 'vehicle_detail' v.id %}">
+        {% if v.main_image %}
+          {% if v.main_image.thumb %}
+            <img src="{{ v.main_image.thumb.url }}" alt="" style="width:100%; height:160px; object-fit:cover;">
+          {% else %}
+            <img src="{{ v.main_image.image.url }}" alt="" style="width:100%; height:160px; object-fit:cover;">
+          {% endif %}
+        {% else %}
+          <div style="height:160px; background:#eee;"></div>
+        {% endif %}
+      </a>
+      <div style="padding:10px;">
+        <div><strong>{{ v.title }}</strong></div>
+        <div style="color:#666; font-size:13px;">{{ v.model.maker }} {{ v.model.name }}</div>
+      </div>
+    </div>
+  {% empty %}
+    <p>車両がありません。</p>
+  {% endfor %}
+</div>
+
+{% include "accounts/_pager.html" %}
+
+{% endblock %}

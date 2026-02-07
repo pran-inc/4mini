@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ team.name }}{% endblock %}
+{% block content %}
+
+<h1>Edit Team: {{ team.name }}</h1>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Save</button>
+</form>
+
+<hr>
+
+<h2>Invite Member</h2>
+<form method="post" action="{% url 'team_invite' team.id %}">
+  {% csrf_token %}
+  {{ invite_form.as_p }}
+  <button type="submit">Invite</button>
+</form>
+
+<hr>
+
+<h2>Pending Join Requests</h2>
+<ul>
+  {% for m in pending_requests %}
+    <li style="margin-bottom:10px;">
+      {{ m.user.username }}
+      <form method="post" action="{% url 'team_request_approve' team.id m.user_id %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit">Approve</button>
+      </form>
+      <form method="post" action="{% url 'team_request_reject' team.id m.user_id %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit">Reject</button>
+      </form>
+    </li>
+  {% empty %}
+    <li>なし</li>
+  {% endfor %}
+</ul>
+
+<hr>
+
+<h2>Pending Invites</h2>
+<ul>
+  {% for m in pending_invites %}
+    <li>{{ m.user.username }}（招待中）</li>
+  {% empty %}
+    <li>なし</li>
+  {% endfor %}
+</ul>
+
+<hr>
+
+<h2>Pinned Vehicles (max 3)</h2>
+
+<form method="post" action="{% url 'team_pinned_add' team.id %}">
+  {% csrf_token %}
+  {{ pinned_form.as_p }}
+  <button type="submit">Add pinned</button>
+</form>
+
+<ul style="margin-top:10px;">
+  {% for p in pinned %}
+    <li style="margin-bottom:10px;">
+      {{ p.vehicle.title }} ({{ p.vehicle.model.maker }} {{ p.vehicle.model.name }})
+      <form method="post" action="{% url 'team_pinned_remove' team.id p.id %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" onclick="return confirm('代表車両を外しますか？');">Remove</button>
+      </form>
+    </li>
+  {% empty %}
+    <li>まだ設定されていません</li>
+  {% endfor %}
+</ul>
+
+<hr>
+
+<h2>Members</h2>
+<ul>
+  {% for m in approved_memberships %}
+    <li style="margin-bottom:10px;">
+      {{ m.user.username }}
+      {% if m.user_id == team.owner_id %}
+        （Owner）
+      {% else %}
+        {% if m.role == "admin" %}
+          [ADMIN]
+        {% endif %}
+
+        <form method="post" action="{% url 'team_role_toggle' team.id m.user_id %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit">
+            {% if m.role == "admin" %}Demote{% else %}Promote to Admin{% endif %}
+          </button>
+        </form>
+
+        <form method="post" action="{% url 'team_member_remove' team.id m.user_id %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" onclick="return confirm('このメンバーを削除しますか？（論理削除）');">Remove</button>
+        </form>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+
+<hr>
+
+<h2>Delete Team</h2>
+<p style="color:#b00;">この操作は取り消せません（論理削除）</p>
+<a href="{% url 'team_delete_confirm' team.id %}">Delete Team</a>
+
+{% endblock %}

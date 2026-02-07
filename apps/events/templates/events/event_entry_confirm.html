@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Confirm Entry{% endblock %}
+{% block content %}
+
+<h1>Confirm Entry: {{ event.title }}</h1>
+
+<div style="display:flex; gap:16px; align-items:flex-start; margin:16px 0;">
+  <div style="width:220px;">
+    {% if vehicle.main_image %}
+      {% if vehicle.main_image.thumb %}
+        <img src="{{ vehicle.main_image.thumb.url }}" alt="" style="width:100%; height:auto; border-radius:10px;">
+      {% else %}
+        <img src="{{ vehicle.main_image.image.url }}" alt="" style="width:100%; height:auto; border-radius:10px;">
+      {% endif %}
+    {% else %}
+      <div style="width:100%; aspect-ratio: 4/3; background:#eee; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+        <span style="color:#666;">No Image</span>
+      </div>
+    {% endif %}
+  </div>
+
+  <div>
+    <p style="margin:0 0 8px 0;">
+      <strong>{{ vehicle.title }}</strong><br>
+      {{ vehicle.model.maker }} {{ vehicle.model.name }}
+    </p>
+
+    <h3 style="margin:12px 0 8px 0;">この車両でエントリーしますか？</h3>
+
+    <form method="post" style="display:flex; gap:10px; flex-wrap:wrap;">
+      {% csrf_token %}
+      <button type="submit" name="action" value="confirm">はい、この車両でエントリー</button>
+      <button type="submit" name="action" value="back">戻って選び直す</button>
+    </form>
+  </div>
+</div>
+
+<p><a href="{% url 'event_detail' event.id %}">イベント詳細に戻る</a></p>
+
+{% endblock %}

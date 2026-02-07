@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}My Teams{% endblock %}
+{% block content %}
+
+<h1>My Teams</h1>
+
+<p><a href="{% url 'team_create' %}">＋ チームを作成</a></p>
+
+<h2>Joined Teams</h2>
+<ul>
+  {% for t in member_teams %}
+    <li><a href="{% url 'team_detail' t.id %}">{{ t.name }}</a></li>
+  {% empty %}
+    <li>参加中のチームはありません。</li>
+  {% endfor %}
+</ul>
+
+<h2>Owned Teams (not shown above)</h2>
+<ul>
+  {% for t in owned_only %}
+    <li><a href="{% url 'team_detail' t.id %}">{{ t.name }}</a></li>
+  {% empty %}
+    <li>なし</li>
+  {% endfor %}
+</ul>
+
+{% endblock %}

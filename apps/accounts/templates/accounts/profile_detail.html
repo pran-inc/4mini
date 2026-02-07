@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}{{ display_name }}{% endblock %}
+{% block content %}
+
+<div style="display:flex; gap:16px; align-items:flex-start; margin:16px 0;">
+  <div style="width:120px;">
+    {% if profile.avatar %}
+      <img src="{{ profile.avatar.url }}" alt="" style="width:120px; height:120px; object-fit:cover; border-radius:50%;">
+    {% else %}
+      <div style="width:120px; height:120px; border-radius:50%; background:#eee;"></div>
+    {% endif %}
+  </div>
+
+  <div style="flex:1;">
+    <h1 style="margin:0;">{{ display_name }}</h1>
+    <div style="color:#666; margin-top:4px;">@{{ profile_user.username }}</div>
+
+    {% if profile.prefecture %}
+      <div style="margin-top:8px;">地域：{{ profile.get_prefecture_display }}</div>
+    {% endif %}
+
+    <div style="margin-top:10px; display:flex; gap:12px; flex-wrap:wrap;">
+      {% if profile.blog_url %}<a href="{{ profile.blog_url }}" target="_blank" rel="noopener">Blog</a>{% endif %}
+      {% if profile.youtube_url %}<a href="{{ profile.youtube_url }}" target="_blank" rel="noopener">YouTube</a>{% endif %}
+      {% if profile.x_url %}<a href="{{ profile.x_url }}" target="_blank" rel="noopener">X</a>{% endif %}
+      {% if profile.instagram_url %}<a href="{{ profile.instagram_url }}" target="_blank" rel="noopener">Instagram</a>{% endif %}
+    </div>
+
+
+
+{% if is_me %}
+  <p><a href="{% url 'team_create' %}">チームを作る</a></p>
+{% endif %}
+
+
+
+
+
+    <div style="margin-top:10px; color:#444;">
+      {% if profile.bike_count is not None %}所有台数：{{ profile.bike_count }}台{% endif %}
+      {% if profile.bike_years is not None %}
+        {% if profile.bike_count is not None %} / {% endif %}
+        バイク歴：{{ profile.bike_years }}年
+      {% endif %}
+    </div>
+
+    {% if is_me %}
+      <div style="margin-top:12px;">
+        <a href="{% url 'account_edit' %}">プロフィール編集</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<hr>
+
+<h2>Vehicles</h2>
+
+<h2>
+  Vehicles
+  <small style="margin-left:10px;">
+    <a href="{% url 'profile_vehicles' profile_user.username %}">もっと見る</a>
+  </small>
+</h2>
+
+{% if vehicles %}
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:14px;">
+    {% for v in vehicles %}
+      <div style="border:1px solid #ddd; border-radius:10px; overflow:hidden;">
+        <a href="{% url 'vehicle_detail' v.id %}">
+          {% if v.main_image %}
+            {% if v.main_image.thumb %}
+              <img src="{{ v.main_image.thumb.url }}" alt="" style="width:100%; height:160px; object-fit:cover;">
+            {% else %}
+              <img src="{{ v.main_image.image.url }}" alt="" style="width:100%; height:160px; object-fit:cover;">
+            {% endif %}
+          {% else %}
+            <div style="height:160px; background:#eee;"></div>
+          {% endif %}
+        </a>
+        <div style="padding:10px;">
+          <div><strong>{{ v.title }}</strong></div>
+          <div style="color:#666; font-size:13px;">{{ v.model.maker }} {{ v.model.name }}</div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>まだ車両がありません。</p>
+{% endif %}
+
+<hr>
+
+<h2>Posts</h2>
+
+<h2>
+  Posts
+  <small style="margin-left:10px;">
+    <a href="{% url 'profile_posts' profile_user.username %}">もっと見る</a>
+  </small>
+</h2>
+
+{% if posts %}
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:14px;">
+    {% for p in posts %}
+      <div style="border:1px solid #ddd; border-radius:10px; overflow:hidden;">
+        <a href="{% url 'post_detail' p.id %}">
+          {% if p.main_image %}
+            {% if p.main_image.thumb %}
+              <img src="{{ p.main_image.thumb.url }}" alt="" style="width:100%; height:160px; object-fit:cover;">
+            {% else %}
+              <img src="{{ p.main_image.image.url }}" alt="" style="width:100%; height:160px; object-fit:cover;">
+            {% endif %}
+          {% else %}
+            <div style="height:160px; background:#eee;"></div>
+          {% endif %}
+        </a>
+        <div style="padding:10px;">
+          <div><strong>{{ p.title }}</strong></div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>まだ投稿がありません。</p>
+{% endif %}
+
+<hr>
+
+<h2>Event Entries</h2>
+
+<h2>
+  Event Entries
+  <small style="margin-left:10px;">
+    <a href="{% url 'profile_entries' profile_user.username %}">もっと見る</a>
+  </small>
+</h2>
+
+<p style="color:#666;">
+  参加イベント数：{{ event_count }} / エントリー数：{{ entry_count }}
+</p>
+
+{% if entries %}
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:14px;">
+    {% for e in entries %}
+      <div style="border:1px solid #ddd; border-radius:10px; overflow:hidden; padding:10px;">
+        <div style="font-weight:bold; margin-bottom:6px;">
+          <a href="{% url 'event_detail' e.event.id %}">{{ e.event.title }}</a>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <div style="width:96px;">
+            <a href="{% url 'vehicle_detail' e.vehicle.id %}">
+              {% if e.vehicle.main_image %}
+                {% if e.vehicle.main_image.thumb %}
+                  <img src="{{ e.vehicle.main_image.thumb.url }}" alt=""
+                       style="width:96px; height:72px; object-fit:cover; border-radius:8px;">
+                {% else %}
+                  <img src="{{ e.vehicle.main_image.image.url }}" alt=""
+                       style="width:96px; height:72px; object-fit:cover; border-radius:8px;">
+                {% endif %}
+              {% else %}
+                <div style="width:96px; height:72px; background:#eee; border-radius:8px;"></div>
+              {% endif %}
+            </a>
+          </div>
+
+          <div style="flex:1;">
+            <div>
+              <a href="{% url 'vehicle_detail' e.vehicle.id %}">
+                <strong>{{ e.vehicle.title }}</strong>
+              </a>
+            </div>
+            <div style="color:#666; font-size:13px;">
+              {{ e.vehicle.model.maker }} {{ e.vehicle.model.name }}
+            </div>
+            <div style="color:#888; font-size:12px; margin-top:4px;">
+              Entry: {{ e.created_at }}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>まだイベントにエントリーしていません。</p>
+{% endif %}
+
+{% endblock %}

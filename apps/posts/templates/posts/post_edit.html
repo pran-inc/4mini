@@ -71,6 +71,10 @@
   </div>
 </form>
 
+<p style="margin-top:18px;">
+  <a href="{% url 'post_delete_confirm' post.id %}">この投稿を削除</a>
+</p>
+
 <script>
 (function() {
   const grid = document.getElementById("image-grid");

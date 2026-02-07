@@ -8,6 +8,8 @@
   <a href="{% url 'event_detail' event.id %}">Back to event</a>
   {% if user.is_authenticated %}
     | <a href="{% url 'event_entry_create' event.id %}">Entry your vehicle</a>
+  {% else %}
+    | <a href="{% url 'login' %}?next={% url 'event_entry_create' event.id %}">Login to entry</a>
   {% endif %}
 </p>
 
@@ -67,11 +69,14 @@
         <div style="margin-top:8px;">
           {% if user.is_authenticated %}
             {% if event.is_active %}
-              {% if entry.id in voted_entry_ids %}
-                <a href="{% url 'event_vote_toggle' event.id entry.id %}">Unvote</a>
-              {% else %}
-                <a href="{% url 'event_vote_toggle' event.id entry.id %}">Vote</a>
-              {% endif %}
+              <form method="post" action="{% url 'event_vote_toggle' event.id entry.id %}" style="display:inline;">
+                {% csrf_token %}
+                {% if entry.id in voted_entry_ids %}
+                  <button type="submit">Unvote</button>
+                {% else %}
+                  <button type="submit">Vote</button>
+                {% endif %}
+              </form>
             {% else %}
               <span style="opacity:0.6;">Voting closed</span>
             {% endif %}
@@ -131,11 +136,14 @@
 
         {% if user.is_authenticated %}
           {% if event.is_active %}
-            {% if entry.id in voted_entry_ids %}
-              | <a href="{% url 'event_vote_toggle' event.id entry.id %}">Unvote</a>
-            {% else %}
-              | <a href="{% url 'event_vote_toggle' event.id entry.id %}">Vote</a>
-            {% endif %}
+            <form method="post" action="{% url 'event_vote_toggle' event.id entry.id %}" style="display:inline;">
+              {% csrf_token %}
+              {% if entry.id in voted_entry_ids %}
+                <span> | </span><button type="submit">Unvote</button>
+              {% else %}
+                <span> | </span><button type="submit">Vote</button>
+              {% endif %}
+            </form>
           {% else %}
             | <span style="opacity:0.6;">Voting closed</span>
           {% endif %}

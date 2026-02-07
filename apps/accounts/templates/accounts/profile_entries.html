@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{{ display_name }} - Entries{% endblock %}
+{% block content %}
+
+<h1>
+  <a href="{% url 'profile_detail' profile_user.username %}">{{ display_name }}</a>
+  / Event Entries
+</h1>
+
+{% if is_me %}
+  <p><a href="{% url 'account_edit' %}">プロフィール編集</a></p>
+{% endif %}
+
+{% include "accounts/_pager.html" %}
+
+<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:14px;">
+  {% for e in page_obj.object_list %}
+    <div style="border:1px solid #ddd; border-radius:10px; overflow:hidden; padding:10px;">
+      <div style="font-weight:bold; margin-bottom:6px;">
+        <a href="{% url 'event_detail' e.event.id %}">{{ e.event.title }}</a>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <div style="width:96px;">
+          <a href="{% url 'vehicle_detail' e.vehicle.id %}">
+            {% if e.vehicle.main_image %}
+              {% if e.vehicle.main_image.thumb %}
+                <img src="{{ e.vehicle.main_image.thumb.url }}" alt=""
+                     style="width:96px; height:72px; object-fit:cover; border-radius:8px;">
+              {% else %}
+                <img src="{{ e.vehicle.main_image.image.url }}" alt=""
+                     style="width:96px; height:72px; object-fit:cover; border-radius:8px;">
+              {% endif %}
+            {% else %}
+              <div style="width:96px; height:72px; background:#eee; border-radius:8px;"></div>
+            {% endif %}
+          </a>
+        </div>
+
+        <div style="flex:1;">
+          <div>
+            <a href="{% url 'vehicle_detail' e.vehicle.id %}">
+              <strong>{{ e.vehicle.title }}</strong>
+            </a>
+          </div>
+          <div style="color:#666; font-size:13px;">
+            {{ e.vehicle.model.maker }} {{ e.vehicle.model.name }}
+          </div>
+          <div style="color:#888; font-size:12px; margin-top:4px;">
+            Entry: {{ e.created_at }}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <p>まだイベントにエントリーしていません。</p>
+  {% endfor %}
+</div>
+
+{% include "accounts/_pager.html" %}
+
+{% endblock %}

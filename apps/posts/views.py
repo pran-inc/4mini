@@ -10,6 +10,25 @@ import json
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.db.models import Prefetch
+from apps.common.utils import delete_queryset_with_files
+
+from django.views.decorators.http import require_POST
+
+
+def _delete_image_files(obj) -> None:
+    """
+    obj.image / obj.thumb が ImageField の場合に、ストレージ上のファイルも削除する
+    """
+    for attr in ("thumb", "image"):
+        f = getattr(obj, attr, None)
+        if not f:
+            continue
+        delete = getattr(f, "delete", None)
+        if callable(delete):
+            try:
+                f.delete(save=False)
+            except Exception:
+                pass
 
 
 def _sync_post_main_image(post):
@@ -36,19 +55,27 @@ def post_create(request):
                 post = form.save(commit=False)
                 post.author = request.user
                 post.save()
-                form.save_m2m()  # ← tags_text を tags に反映
+                form.save_m2m()
 
-                files = form.cleaned_data["images"]
+                # ✅ 画像保存（最大10枚）
+                files = form.cleaned_data.get("images", []) or []
                 for i, f in enumerate(files[:10]):
-                    PostImage.objects.create(post=post, image=f, sort_order=i)
+                    PostImage.objects.create(
+                        post=post,
+                        image=f,
+                        sort_order=i,
+                    )
 
-                _sync_post_main_image(post)  # ← leftmost を main に
+                # ✅ 左端＝メインに同期（ここで1回だけ）
+                _sync_post_main_image(post)
 
-            return redirect("post_detail", pk=post.pk)
+            return redirect("post_confirm", pk=post.pk)
     else:
         form = PostForm()
 
     return render(request, "posts/post_form.html", {"form": form})
+
+
 
 
 def post_list(request):
@@ -177,3 +204,62 @@ def post_edit(request, pk: int):
         "form": form,
         "post": post,
     })
+
+
+
+@login_required
+def post_confirm(request, pk: int):
+    post = get_object_or_404(
+        Post.objects.select_related("author", "main_image"),
+        pk=pk,
+        author=request.user
+    )
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "confirm":
+            messages.success(request, "投稿しました。")
+            return redirect("post_detail", pk=post.pk)
+
+        if action == "edit":
+            return redirect("post_edit", pk=post.pk)
+
+        if action == "discard":
+            with transaction.atomic():
+                delete_queryset_with_files(
+                    PostImage.objects.filter(post=post),
+                    field_names=("thumb", "image")
+                )
+                post.delete()
+
+            messages.info(request, "投稿を破棄しました。")
+            return redirect("post_list")
+
+    return render(request, "posts/post_confirm.html", {"post": post})
+
+
+@login_required
+def post_delete_confirm(request, pk: int):
+    post = get_object_or_404(
+        Post.objects.select_related("author", "main_image"),
+        pk=pk,
+        author=request.user
+    )
+    return render(request, "posts/post_delete_confirm.html", {"post": post})
+
+
+@login_required
+@require_POST
+def post_delete(request, pk: int):
+    post = get_object_or_404(Post, pk=pk, author=request.user)
+
+    with transaction.atomic():
+        delete_queryset_with_files(
+            PostImage.objects.filter(post=post),
+            field_names=("thumb", "image"),
+        )
+        post.delete()
+
+    messages.success(request, "投稿を削除しました。")
+    return redirect("post_list")

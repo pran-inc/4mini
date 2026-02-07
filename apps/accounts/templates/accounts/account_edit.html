@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Account Edit{% endblock %}
+{% block content %}
+
+<h1>アカウント編集</h1>
+
+<form method="post" enctype="multipart/form-data" style="max-width:720px;">
+  {% csrf_token %}
+
+  <h2 style="margin-top:16px;">基本</h2>
+
+  <p>
+    <strong>ユーザー名（ログイン用）:</strong><br>
+    {{ request.user.username }}
+  </p>
+
+  <p>
+    <label>Email</label><br>
+    {{ user_form.email }}
+    {% for e in user_form.email.errors %}<div style="color:#b00;">{{ e }}</div>{% endfor %}
+  </p>
+
+  <p>
+    <label>ユーザーネーム（表示名）</label><br>
+    {{ profile_form.display_name }}
+    {% for e in profile_form.display_name.errors %}<div style="color:#b00;">{{ e }}</div>{% endfor %}
+  </p>
+
+  <p>
+    <label>アイコン</label><br>
+    {% if request.user.profile.avatar %}
+      <img src="{{ request.user.profile.avatar.url }}" alt="" style="width:96px; height:96px; object-fit:cover; border-radius:50%; display:block; margin-bottom:8px;">
+    {% endif %}
+    {{ profile_form.avatar }}
+    {% for e in profile_form.avatar.errors %}<div style="color:#b00;">{{ e }}</div>{% endfor %}
+  </p>
+
+  <p>
+    <label>地域（都道府県）</label><br>
+    {{ profile_form.prefecture }}
+  </p>
+
+  <h2 style="margin-top:18px;">リンク</h2>
+
+  <p><label>ブログURL</label><br>{{ profile_form.blog_url }}</p>
+  <p><label>YouTubeチャンネルURL</label><br>{{ profile_form.youtube_url }}</p>
+  <p><label>XアカウントURL</label><br>{{ profile_form.x_url }}</p>
+  <p><label>InstagramアカウントURL</label><br>{{ profile_form.instagram_url }}</p>
+
+  <h2 style="margin-top:18px;">バイク情報</h2>
+  <p><label>バイク所有台数</label><br>{{ profile_form.bike_count }}</p>
+  <p><label>バイク歴（年）</label><br>{{ profile_form.bike_years }}</p>
+
+  <p><label>プロフィール公開</label><br>{{ profile_form.is_public }}</p>
+
+  <button type="submit" style="margin-top:16px;">保存</button>
+</form>
+
+{% endblock %}

@@ -1,10 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Add Vehicle{% endblock %}
 {% block content %}
+
 <h1>Add Vehicle</h1>
+
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %}
   {{ form.as_p }}
-  <button type="submit">Save</button>
+  <button type="submit">登録</button>
 </form>
+
+<p style="opacity:0.7;margin-top:8px;">
+  まずは「車種・名前・写真」だけでOK。あとから詳細を追加できます。
+</p>
+
 {% endblock %}

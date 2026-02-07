@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Delete Vehicle{% endblock %}
+{% block content %}
+
+<h1>車両を削除しますか？</h1>
+
+<p style="color:#b00;">この操作は取り消せません。画像も削除されます。</p>
+
+<div style="display:flex; gap:16px; align-items:flex-start; margin:16px 0;">
+  <div style="width:220px;">
+    {% if vehicle.main_image %}
+      {% if vehicle.main_image.thumb %}
+        <img src="{{ vehicle.main_image.thumb.url }}" alt="" style="width:100%; border-radius:10px;">
+      {% else %}
+        <img src="{{ vehicle.main_image.image.url }}" alt="" style="width:100%; border-radius:10px;">
+      {% endif %}
+    {% else %}
+      <div style="width:100%; aspect-ratio:4/3; background:#eee; border-radius:10px;"></div>
+    {% endif %}
+  </div>
+
+  <div>
+    <div><strong>{{ vehicle.title }}</strong></div>
+    <div style="color:#555;">{{ vehicle.model.maker }} {{ vehicle.model.name }}</div>
+
+    <form method="post" action="{% url 'vehicle_delete' vehicle.id %}" style="margin-top:12px;">
+      {% csrf_token %}
+      <button type="submit" onclick="return confirm('本当に削除しますか？');">削除する</button>
+      <a href="{% url 'vehicle_detail' vehicle.id %}" style="margin-left:12px;">キャンセル</a>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

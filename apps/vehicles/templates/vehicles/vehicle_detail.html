@@ -11,6 +11,33 @@
 
 <hr>
 
+<!-- いいね / お気に入り（あなたの既存エンドポイントに合わせてください） -->
+{% if user.is_authenticated %}
+  <button class="js-reaction"
+          data-url="/reactions/toggle/"
+          data-type="vehicle"
+          data-id="{{ vehicle.id }}"
+          data-reaction="like"
+          type="button">
+    👍 Like (<span class="js-count">{{ like_count|default:0 }}</span>)
+  </button>
+
+  <button class="js-reaction"
+          data-url="/reactions/toggle/"
+          data-type="vehicle"
+          data-id="{{ vehicle.id }}"
+          data-reaction="favorite"
+          type="button"
+          style="margin-left:10px;">
+    ⭐ Favorite (<span class="js-count">{{ favorite_count|default:0 }}</span>)
+  </button>
+{% else %}
+  <p><a href="{% url 'login' %}?next={% url 'vehicle_detail' vehicle.id %}">Login</a> to like/favorite.</p>
+{% endif %}
+
+
+<hr>
+
 <!-- ========================= -->
 <!-- メイン画像：サムネクリックで差し替え -->
 <!-- ========================= -->
@@ -48,6 +75,15 @@
   <p>No images.</p>
 {% endif %}
 
+{% if vehicle.specs %}
+  <h3>More specs</h3>
+  <ul>
+    {% for k, v in vehicle.specs.items %}
+      <li>{{ k }}: {{ v }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
 <script>
 (function() {
   const mainImg = document.getElementById("js-main-image");
@@ -79,6 +115,12 @@
 <hr>
 
 <h2>Details</h2>
+
+
+<a href="{% url 'profile_detail' vehicle.owner.username %}">
+  {{ vehicle.owner.username }}
+</a>
+
 <ul>
   {% if vehicle.year %}<li>Year: {{ vehicle.year }}</li>{% endif %}
   {% if vehicle.custom_summary %}<li>Custom: {{ vehicle.custom_summary }}</li>{% endif %}
@@ -90,29 +132,44 @@
 
 <hr>
 
-<!-- いいね / お気に入り（あなたの既存エンドポイントに合わせてください） -->
-{% if user.is_authenticated %}
-  <button class="js-reaction"
-          data-url="/reactions/toggle/"
-          data-type="vehicle"
-          data-id="{{ vehicle.id }}"
-          data-reaction="like"
-          type="button">
-    👍 Like (<span class="js-count">{{ like_count|default:0 }}</span>)
-  </button>
+<h2>Custom Parts</h2>
 
-  <button class="js-reaction"
-          data-url="/reactions/toggle/"
-          data-type="vehicle"
-          data-id="{{ vehicle.id }}"
-          data-reaction="favorite"
-          type="button"
-          style="margin-left:10px;">
-    ⭐ Favorite (<span class="js-count">{{ favorite_count|default:0 }}</span>)
-  </button>
-{% else %}
-  <p><a href="{% url 'login' %}?next={% url 'vehicle_detail' vehicle.id %}">Login</a> to like/favorite.</p>
+{% if user.is_authenticated and user.id == vehicle.owner_id %}
+  <p><a href="{% url 'vehicle_edit' vehicle.id %}#parts">+ Add Part</a></p>
 {% endif %}
+
+{% if parts %}
+  {% regroup parts by part.category as grouped %}
+  {% for g in grouped %}
+    <h3 style="margin-top:14px;">{{ g.grouper.name }}</h3>
+    <ul>
+      {% for vp in g.list %}
+        <li style="margin-bottom:6px;">
+        <strong>
+          {% if vp.part %}
+            {{ vp.part.name }}
+          {% else %}
+            {{ vp.part_free_text }}
+          {% endif %}
+        </strong>          {% if vp.maker %} / {{ vp.maker.name }}{% endif %}
+          {% if vp.model_number %} / {{ vp.model_number }}{% endif %}
+          {% if vp.spec %} / {{ vp.spec }}{% endif %}
+          {% if vp.note %}<div style="opacity:0.85;">{{ vp.note|linebreaksbr }}</div>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endfor %}
+{% else %}
+  <p style="opacity:0.7;">No custom parts yet.</p>
+{% endif %}
+
+{% if user.is_authenticated and user.id == vehicle.owner_id %}
+  <p>
+    <a href="{% url 'vehicle_edit' vehicle.id %}">Edit</a>
+    | <a href="{% url 'vehicle_delete_confirm' vehicle.id %}">Delete</a>
+  </p>
+{% endif %}
+
 
 <script>
 (function() {

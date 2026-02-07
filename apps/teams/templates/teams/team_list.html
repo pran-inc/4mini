@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Teams{% endblock %}
+{% block content %}
+
+<h1>Teams</h1>
+
+<ul>
+  {% for t in teams %}
+    <li>
+      <a href="{% url 'team_detail' t.id %}">{{ t.name }}</a>
+      {% if t.prefecture %}（{{ t.get_prefecture_display }}）{% endif %}
+    </li>
+  {% empty %}
+    <li>No teams yet.</li>
+  {% endfor %}
+</ul>
+
+{% if user.is_authenticated %}
+  <p><a href="{% url 'team_create' %}">＋ チームを作成</a></p>
+{% else %}
+  <p><a href="{% url 'login' %}?next={% url 'team_create' %}">ログインしてチームを作成</a></p>
+{% endif %}
+
+{% endblock %}

@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     "apps.posts.apps.PostsConfig",
     "apps.interactions.apps.InteractionsConfig",
     "apps.events.apps.EventsConfig",
+    "apps.teams.apps.TeamsConfig",
+    "apps.common",
 
 ]
 
@@ -75,6 +77,8 @@ TEMPLATES = [
                 "django.template.context_processors.static",
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
+                'apps.teams.context_processors.team_invite_count',
+
             ],
         },
     },

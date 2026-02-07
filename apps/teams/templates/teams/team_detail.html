@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load common_extras %}
+{% block title %}{{ team.name }}{% endblock %}
+{% block content %}
+
+<h1>{{ team.name }}</h1>
+
+{% if team.logo %}
+  <img src="{{ team.logo.url }}" width="120" alt="">
+{% endif %}
+
+{% if team.main_image %}
+  <div style="margin:10px 0;">
+    <img src="{{ team.main_image.url }}" style="max-width:100%; height:auto;" alt="">
+  </div>
+{% endif %}
+
+{% if team.prefecture %}
+  <p>地域：{{ team.get_prefecture_display }}</p>
+{% endif %}
+
+{% if team.tags.all %}
+  <p>
+    Tags:
+    {% for t in team.tags.all %}
+      <span style="display:inline-block; border:1px solid #ccc; padding:2px 8px; border-radius:999px; margin-right:6px;">
+        {{ t.name }}
+      </span>
+    {% endfor %}
+  </p>
+{% endif %}
+
+{% if team.description %}
+  <p>{{ team.description|linebreaksbr }}</p>
+{% endif %}
+
+<p>
+  {% if team.x_url %}<a href="{{ team.x_url }}" target="_blank" rel="noopener">X</a>{% endif %}
+  {% if team.instagram_url %} | <a href="{{ team.instagram_url }}" target="_blank" rel="noopener">Instagram</a>{% endif %}
+</p>
+
+{% if is_admin %}
+  <p><a href="{% url 'team_edit' team.id %}">Edit Team</a></p>
+{% endif %}
+
+{# ✅ 参加ボタン（未参加時） #}
+{% if user.is_authenticated %}
+  {% if not is_member %}
+    {% if my_membership and my_membership.status == "pending" and my_membership.is_active %}
+      <p style="color:#666;">参加申請中です（承認待ち）</p>
+    {% elif my_membership and my_membership.status == "invited" and my_membership.is_active %}
+      <p>
+        招待されています：
+        <a href="{% url 'my_team_invites' %}">招待一覧へ</a>
+      </p>
+    {% else %}
+      <form method="post" action="{% url 'team_join_request' team.id %}">
+        {% csrf_token %}
+        <button type="submit">Join Request</button>
+      </form>
+    {% endif %}
+  {% endif %}
+{% else %}
+  <p><a href="{% url 'login' %}?next={% url 'team_detail' team.id %}">Login to join</a></p>
+{% endif %}
+
+{% if is_admin %}
+  <hr>
+
+  {% if is_admin %}
+  <hr>
+  <h2>Invite Member</h2>
+
+  <form method="post" action="{% url 'team_invite_create' team.id %}">
+    {% csrf_token %}
+    <input type="text" name="username" placeholder="username">
+    <button type="submit">Invite</button>
+  </form>
+{% endif %}
+
+
+<hr>
+
+  <h2>Admin: Pending Requests</h2>
+  <ul>
+    {% for m in pending_requests %}
+      <li style="margin-bottom:10px;">
+        <a href="{% url 'profile_detail' m.user.username %}">{{ m.user.username }}</a>
+
+        <form method="post" action="{% url 'team_request_approve' team.id m.user_id %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit">Approve</button>
+        </form>
+
+        <form method="post" action="{% url 'team_request_reject' team.id m.user_id %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" onclick="return confirm('申請を却下しますか？');">Reject</button>
+        </form>
+      </li>
+    {% empty %}
+      <li>なし</li>
+    {% endfor %}
+  </ul>
+
+  <h2>Admin: Pending Invites</h2>
+  <ul>
+    {% for m in pending_invites %}
+      <li style="margin-bottom:10px;">
+        <a href="{% url 'profile_detail' m.user.username %}">{{ m.user.username }}</a>（招待中）
+
+        <form method="post" action="{% url 'team_invite_cancel' team.id m.user_id %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" onclick="return confirm('この招待を取り消しますか？');">Cancel invite</button>
+        </form>
+      </li>
+    {% empty %}
+      <li>なし</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+
+<hr>
+
+{# ✅ 代表車両 #}
+<h2>Pinned Vehicles</h2>
+{% if pinned %}
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px;">
+    {% for p in pinned %}
+      <div style="border:1px solid #ddd; padding:8px; border-radius:10px;">
+        <a href="{% url 'vehicle_detail' p.vehicle.id %}">
+          {% if p.vehicle.main_image %}
+            {% if p.vehicle.main_image.thumb %}
+              <img src="{{ p.vehicle.main_image.thumb.url }}" style="width:100%; height:160px; object-fit:cover; border-radius:8px;" alt="">
+            {% else %}
+              <img src="{{ p.vehicle.main_image.image.url }}" style="width:100%; height:160px; object-fit:cover; border-radius:8px;" alt="">
+            {% endif %}
+          {% else %}
+            <div style="height:160px; background:#eee; border-radius:8px;"></div>
+          {% endif %}
+        </a>
+        <div style="margin-top:6px;">
+          <strong>{{ p.vehicle.title }}</strong><br>
+          <small>{{ p.vehicle.model.maker }} {{ p.vehicle.model.name }}</small>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p style="opacity:0.7;">代表車両はまだ設定されていません。</p>
+{% endif %}
+
+<hr>
+
+{# ✅ メンバーの最新投稿 #}
+<h2>Latest Posts</h2>
+{% if latest_posts %}
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px;">
+    {% for p in latest_posts %}
+      <div style="border:1px solid #ddd; border-radius:10px; overflow:hidden;">
+        <a href="{% url 'post_detail' p.id %}">
+          {% if p.main_image %}
+            {% if p.main_image.thumb %}
+              <img src="{{ p.main_image.thumb.url }}" style="width:100%; height:160px; object-fit:cover;" alt="">
+            {% else %}
+              <img src="{{ p.main_image.image.url }}" style="width:100%; height:160px; object-fit:cover;" alt="">
+            {% endif %}
+          {% else %}
+            <div style="height:160px; background:#eee;"></div>
+          {% endif %}
+        </a>
+        <div style="padding:10px;">
+          <div><strong>{{ p.title }}</strong></div>
+          <div style="color:#666; font-size:13px;">
+            by <a href="{% url 'profile_detail' p.author.username %}">{{ p.author.username }}</a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>投稿はまだありません。</p>
+{% endif %}
+
+<hr>
+
+<h2>Members</h2>
+
+{% for m in approved_memberships %}
+  <div style="border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:10px;">
+    <div>
+      <a href="{% url 'profile_detail' m.user.username %}">
+        <strong>{{ m.user.profile.display_name|default:m.user.username }}</strong>
+      </a>
+      {% if m.user.profile.prefecture %}（{{ m.user.profile.get_prefecture_display }}）{% endif %}
+      {% if m.role == "admin" %}<span style="margin-left:8px;">[ADMIN]</span>{% endif %}
+    </div>
+
+    {% with vlist=vehicles_by_user|get_item:m.user.id %}
+      {% if vlist %}
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px; margin-top:10px;">
+          {% for v in vlist %}
+            <div style="border:1px solid #eee; padding:8px; border-radius:10px;">
+              <a href="{% url 'vehicle_detail' v.id %}">
+                {% if v.main_image %}
+                  {% if v.main_image.thumb %}
+                    <img src="{{ v.main_image.thumb.url }}" style="width:100%; height:160px; object-fit:cover; border-radius:8px;" alt="">
+                  {% else %}
+                    <img src="{{ v.main_image.image.url }}" style="width:100%; height:160px; object-fit:cover; border-radius:8px;" alt="">
+                  {% endif %}
+                {% else %}
+                  <div style="height:160px; background:#eee; border-radius:8px;"></div>
+                {% endif %}
+              </a>
+              <div style="margin-top:6px;">
+                <strong>{{ v.title }}</strong><br>
+                <small>{{ v.model.maker }} {{ v.model.name }}</small>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="opacity:0.7; margin-top:8px;">車両がありません。</p>
+      {% endif %}
+    {% endwith %}
+  </div>
+{% empty %}
+  <p>No members yet.</p>
+{% endfor %}
+
+{% endblock %}

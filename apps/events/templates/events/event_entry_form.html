@@ -1,24 +1,125 @@
 {% extends "base.html" %}
 {% block title %}Entry{% endblock %}
 {% block content %}
+
 <h1>Entry: {{ event.title }}</h1>
 
 <form method="post">
   {% csrf_token %}
 
-  <p>Select your vehicle:</p>
-  {% for v in my_vehicles %}
-    <label style="display:block; margin-bottom:10px;">
-      <input type="radio" name="vehicle_id" value="{{ v.id }}">
-      {{ v.title }} ({{ v.model.maker }} {{ v.model.name }})
-      {% if v.images.all|length %}
-        - <img src="{{ v.images.all.0.image.url }}" width="120" alt="">
-      {% endif %}
-    </label>
-  {% empty %}
-    <p>No vehicles yet. <a href="{% url 'vehicle_create' %}">Add Vehicle</a></p>
-  {% endfor %}
+  <p style="margin:10px 0 14px 0;">
+    エントリーする車両を選んでください（同一車両の重複エントリーはできません）
+  </p>
 
-  <button type="submit">Entry</button>
+  {# ----------------------------
+     すでにエントリー済み（上にまとめる）
+     ---------------------------- #}
+  {% if entered_vehicles %}
+    <h2 style="margin:18px 0 10px 0; font-size:18px;">Already entered</h2>
+
+    <div style="
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap:14px;
+      margin-bottom:18px;
+    ">
+      {% for v in entered_vehicles %}
+        <div style="border:1px solid #ddd; border-radius:10px; overflow:hidden; opacity:0.85;">
+          <div style="position:relative;">
+            {% if v.main_image %}
+              {% if v.main_image.thumb %}
+                <img src="{{ v.main_image.thumb.url }}" alt="" style="width:100%; height:160px; object-fit:cover;">
+              {% else %}
+                <img src="{{ v.main_image.image.url }}" alt="" style="width:100%; height:160px; object-fit:cover;">
+              {% endif %}
+            {% else %}
+              <div style="height:160px; background:#eee;"></div>
+            {% endif %}
+
+            <div style="
+              position:absolute; top:10px; left:10px;
+              background:rgba(0,0,0,0.7); color:#fff;
+              padding:4px 8px; border-radius:999px; font-size:12px;
+            ">
+              エントリー済み
+            </div>
+          </div>
+
+          <div style="padding:10px;">
+            <div><strong>{{ v.title }}</strong></div>
+            <div style="color:#555; font-size:13px;">{{ v.model.maker }} {{ v.model.name }}</div>
+            <div style="margin-top:8px;">
+              <a href="{% url 'vehicle_detail' v.id %}">車両を見る</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {# ----------------------------
+     選択できる車両（グリッド）
+     ---------------------------- #}
+  <h2 style="margin:18px 0 10px 0; font-size:18px;">Select a vehicle</h2>
+
+  {% if available_vehicles %}
+    <div style="
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap:14px;
+      margin-bottom:16px;
+    ">
+      {% for v in available_vehicles %}
+        <label style="
+          border:1px solid #ccc; border-radius:10px; overflow:hidden;
+          cursor:pointer; display:block;
+        ">
+          <div style="position:relative;">
+            {% if v.main_image %}
+              {% if v.main_image.thumb %}
+                <img src="{{ v.main_image.thumb.url }}" alt="" style="width:100%; height:160px; object-fit:cover;">
+              {% else %}
+                <img src="{{ v.main_image.image.url }}" alt="" style="width:100%; height:160px; object-fit:cover;">
+              {% endif %}
+            {% else %}
+              <div style="height:160px; background:#eee;"></div>
+            {% endif %}
+
+            <div style="
+              position:absolute; top:10px; left:10px;
+              background:rgba(255,255,255,0.85); color:#111;
+              padding:4px 8px; border-radius:999px; font-size:12px;
+            ">
+              選択可能
+            </div>
+          </div>
+
+          <div style="padding:10px; display:flex; gap:10px; align-items:flex-start;">
+            <input type="radio" name="vehicle_id" value="{{ v.id }}" style="margin-top:4px;">
+            <div>
+              <div><strong>{{ v.title }}</strong></div>
+              <div style="color:#555; font-size:13px;">{{ v.model.maker }} {{ v.model.name }}</div>
+              <div style="margin-top:6px;">
+                <a href="{% url 'vehicle_detail' v.id %}" onclick="event.stopPropagation();">車両を見る</a>
+              </div>
+            </div>
+          </div>
+        </label>
+      {% endfor %}
+    </div>
+
+    <button type="submit">Confirm</button>
+
+  {% else %}
+    {% if entered_vehicles %}
+      <p>選択できる車両がありません（すべてエントリー済みです）。</p>
+    {% else %}
+      <p>
+        No vehicles yet.
+        <a href="{% url 'vehicle_create_quick' %}">Add Vehicle</a>
+      </p>
+    {% endif %}
+  {% endif %}
 </form>
+
 {% endblock %}
