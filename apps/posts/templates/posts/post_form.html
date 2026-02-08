@@ -1,10 +1,60 @@
 {% extends "base.html" %}
 {% block title %}Add Post{% endblock %}
 {% block content %}
+
 <h1>Add Post</h1>
+
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Save</button>
+  {{ form.non_field_errors }}
+
+  <p>
+    {{ form.vehicle.label_tag }}<br>
+    {{ form.vehicle }}
+    {{ form.vehicle.errors }}
+  </p>
+
+  <p>
+    {{ form.title.label_tag }}<br>
+    {{ form.title }}
+    {{ form.title.errors }}
+  </p>
+
+  <p>
+    {{ form.body.label_tag }}<br>
+    {{ form.body }}
+    {{ form.body.errors }}
+  </p>
+
+  <p>
+    {{ form.tags_text.label_tag }}<br>
+    {{ form.tags_text }}
+    {{ form.tags_text.errors }}
+    {% if form.tags_text.help_text %}<small style="opacity:0.7;">{{ form.tags_text.help_text }}</small>{% endif %}
+  </p>
+
+  <p>
+    {{ form.images.label_tag }}<br>
+    {{ form.images }}
+    {{ form.images.errors }}
+    {% if form.images.help_text %}<small style="opacity:0.7;">{{ form.images.help_text }}</small>{% endif %}
+  </p>
+
+  <!-- 選択中プレビュー -->
+  <div id="preview-post-images" style="max-width:920px; margin-top:10px;"></div>
+
+  <button type="submit">Create</button>
 </form>
+
+<script>
+(function(){
+  const el = document.getElementById("id_images");
+  if (el) {
+    el.setAttribute("data-preview","multi");
+    el.setAttribute("data-preview-target","#preview-post-images");
+  }
+  if (window.bindFilePreviews) window.bindFilePreviews(document);
+})();
+</script>
+
 {% endblock %}

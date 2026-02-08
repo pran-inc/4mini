@@ -6,12 +6,57 @@
 
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">登録</button>
+  {{ form.non_field_errors }}
+
+  {# ✅ temp ids を form 内で保持（JSON文字列） #}
+  <input type="hidden" name="temp_vehicle_image_ids"
+         value="{{ temp_vehicle_image_ids_json|default:'[]' }}">
+
+  <p>
+    {{ form.model.label_tag }}<br>
+    {{ form.model }}
+    {{ form.model.errors }}
+  </p>
+
+  <p>
+    {{ form.title.label_tag }}<br>
+    {{ form.title }}
+    {{ form.title.errors }}
+  </p>
+
+  <p>
+    {{ form.images.label_tag }}<br>
+    {{ form.images }}
+    {{ form.images.errors }}
+    {% if form.images.help_text %}<small style="opacity:0.7;">{{ form.images.help_text }}</small>{% endif %}
+  </p>
+
+  {# ✅ エラーで戻った時：temp画像を表示 #}
+  {% if temp_images and temp_images|length %}
+    <p style="margin:10px 0 6px 0;">Selected images (temp):</p>
+    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+      {% for t in temp_images %}
+        <img src="{{ t.file.url }}" alt=""
+             style="width:140px; height:100px; object-fit:cover; border-radius:10px;">
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {# ✅ 選択直後のJSプレビュー #}
+  <div id="preview-vehicle-images" style="max-width:920px; margin-top:10px;"></div>
+
+  <button type="submit">Create</button>
 </form>
 
-<p style="opacity:0.7;margin-top:8px;">
-  まずは「車種・名前・写真」だけでOK。あとから詳細を追加できます。
-</p>
+<script>
+(function(){
+  const el = document.getElementById("id_images");
+  if (el) {
+    el.setAttribute("data-preview","multi");
+    el.setAttribute("data-preview-target","#preview-vehicle-images");
+  }
+  if (window.bindFilePreviews) window.bindFilePreviews(document);
+})();
+</script>
 
 {% endblock %}

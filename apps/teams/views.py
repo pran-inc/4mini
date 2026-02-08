@@ -27,6 +27,14 @@ from .models import (
     TeamTag,
 )
 
+from apps.common.utils import (
+    save_temp_upload,
+    get_temp_upload_for_user,
+    copy_temp_to_field,
+    delete_temp,
+)
+
+
 User = get_user_model()
 
 
@@ -177,101 +185,104 @@ def team_detail(request, team_id: int):
         **says,
     })
 
-
 @login_required
 def team_create(request):
+    temp_logo = None
+    temp_main = None
+
     if request.method == "POST":
         form = TeamForm(request.POST, request.FILES)
+
+        temp_logo = get_temp_upload_for_user(
+            request.user, request.POST.get("temp_team_logo_id"), "team_logo"
+        )
+        temp_main = get_temp_upload_for_user(
+            request.user, request.POST.get("temp_team_main_id"), "team_main"
+        )
+
+        if request.FILES.get("logo"):
+            delete_temp(temp_logo)
+            temp_logo = save_temp_upload(request.user, request.FILES["logo"], "team_logo").temp
+
+        if request.FILES.get("main_image"):
+            delete_temp(temp_main)
+            temp_main = save_temp_upload(request.user, request.FILES["main_image"], "team_main").temp
+
         if form.is_valid():
-            with transaction.atomic():
-                team = form.save(commit=False)
-                team.owner = request.user
-                team.save()
+            team = form.save(commit=False)
+            team.owner = request.user  # ← あなたの Team 設計に合わせて
+            if not request.FILES.get("logo") and temp_logo:
+                copy_temp_to_field(temp_logo, team, "logo")
+            if not request.FILES.get("main_image") and temp_main:
+                copy_temp_to_field(temp_main, team, "main_image")
 
-                _sync_team_tags(team, form.cleaned_data.get("tags_text", ""))
+            team.save()
 
-                # 作成者は自動参加（admin）
-                TeamMembership.objects.get_or_create(
-                    team=team,
-                    user=request.user,
-                    defaults={
-                        "role": MembershipRole.ADMIN,
-                        "status": MembershipStatus.APPROVED,
-                        "is_active": True,
-                        "invited_by": request.user,
-                    }
-                )
+            delete_temp(temp_logo)
+            delete_temp(temp_main)
 
             messages.success(request, "チームを作成しました。")
             return redirect("team_detail", team_id=team.id)
+
     else:
         form = TeamForm()
 
-    return render(request, "teams/team_form.html", {"form": form, "mode": "create"})
+    return render(request, "teams/team_form.html", {
+        "form": form,
+        "temp_team_logo": temp_logo,
+        "temp_team_main": temp_main,
+    })
 
 
 @login_required
 def team_edit(request, team_id: int):
-    team = _team_or_404(team_id)
-    if not _is_team_admin(team, request.user):
-        return HttpResponseForbidden("Not allowed")
+    team = get_object_or_404(Team, id=team_id, owner=request.user)
+
+    temp_logo = None
+    temp_main = None
 
     if request.method == "POST":
         form = TeamForm(request.POST, request.FILES, instance=team)
+
+        temp_logo = get_temp_upload_for_user(
+            request.user, request.POST.get("temp_team_logo_id"), "team_logo"
+        )
+        temp_main = get_temp_upload_for_user(
+            request.user, request.POST.get("temp_team_main_id"), "team_main"
+        )
+
+        if request.FILES.get("logo"):
+            delete_temp(temp_logo)
+            temp_logo = save_temp_upload(request.user, request.FILES["logo"], "team_logo").temp
+
+        if request.FILES.get("main_image"):
+            delete_temp(temp_main)
+            temp_main = save_temp_upload(request.user, request.FILES["main_image"], "team_main").temp
+
         if form.is_valid():
-            with transaction.atomic():
-                team = form.save()
-                _sync_team_tags(team, form.cleaned_data.get("tags_text", ""))
-            messages.success(request, "チーム情報を更新しました。")
-            return redirect("team_edit", team_id=team.id)
+            team = form.save(commit=False)
+
+            if not request.FILES.get("logo") and temp_logo:
+                copy_temp_to_field(temp_logo, team, "logo")
+            if not request.FILES.get("main_image") and temp_main:
+                copy_temp_to_field(temp_main, team, "main_image")
+
+            team.save()
+
+            delete_temp(temp_logo)
+            delete_temp(temp_main)
+
+            messages.success(request, "チームを更新しました。")
+            return redirect("team_detail", team_id=team.id)
+
     else:
-        # tags_text 初期値
-        tags_text = ", ".join(TeamTag.objects.filter(team=team).values_list("name", flat=True))
-        form = TeamForm(instance=team, initial={"tags_text": tags_text})
+        form = TeamForm(instance=team)
 
-    invite_form = TeamInviteForm()
-    role_form = RoleChangeForm()
-
-    pending_invites = (
-        TeamMembership.objects
-        .filter(team=team, is_active=True, status=MembershipStatus.INVITED)
-        .select_related("user")
-        .order_by("-created_at")
-    )
-
-    pending_requests = (
-        TeamMembership.objects
-        .filter(team=team, is_active=True, status=MembershipStatus.PENDING)
-        .select_related("user")
-        .order_by("-created_at")
-    )
-
-    approved_memberships = (
-        TeamMembership.objects
-        .filter(team=team, is_active=True, status=MembershipStatus.APPROVED)
-        .select_related("user")
-        .order_by("id")
-    )
-
-    pinned = (
-        TeamPinnedVehicle.objects
-        .filter(team=team)
-        .select_related("vehicle", "vehicle__model", "vehicle__main_image")
-        .order_by("sort_order", "id")
-    )
-
-    pinned_form = TeamPinnedVehicleForm(team=team, user=request.user)
-
-    return render(request, "teams/team_edit.html", {
-        "team": team,
+    return render(request, "teams/team_form.html", {
         "form": form,
-        "invite_form": invite_form,
-        "role_form": role_form,
-        "pending_invites": pending_invites,
-        "pending_requests": pending_requests,
-        "approved_memberships": approved_memberships,
-        "pinned": pinned,
-        "pinned_form": pinned_form,
+        "team": team,
+        "temp_team_logo": temp_logo,
+        "temp_team_main": temp_main,
     })
 
 

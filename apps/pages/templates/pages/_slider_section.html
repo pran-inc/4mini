@@ -1,0 +1,103 @@
+<section style="margin:18px 0;">
+  <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px;">
+    <h2 style="margin:0; font-size:18px;">{{ title }}</h2>
+    {% if kind == "vehicle" %}
+      <a href="{% url 'vehicle_list' %}">See all</a>
+    {% elif kind == "post" %}
+      <a href="{% url 'post_list' %}">See all</a>
+    {% elif kind == "event" %}
+      <a href="{% url 'event_list' %}">See all</a>
+    {% endif %}
+  </div>
+
+  <div class="js-slider" style="
+    margin-top:10px;
+    overflow:hidden;
+    border:1px solid #ddd;
+    border-radius:12px;
+    padding:10px;
+  ">
+    <div class="js-track" style="
+      display:flex;
+      gap:10px;
+      overflow-x:auto;
+      scroll-behavior:smooth;
+      padding-bottom:6px;
+    ">
+      {% for obj in items %}
+        <div style="min-width:220px; max-width:220px; border:1px solid #eee; border-radius:12px; overflow:hidden;">
+          {% if kind == "vehicle" %}
+            <a href="{% url 'vehicle_detail' obj.id %}" style="text-decoration:none; color:inherit;">
+              {% if obj.main_image %}
+                <img src="{{ obj.main_image.image.url }}" alt="" style="width:100%; height:140px; object-fit:cover;">
+              {% else %}
+                <div style="width:100%; height:140px; background:#eee;"></div>
+              {% endif %}
+              <div style="padding:10px;">
+                <div style="font-weight:bold; line-height:1.2;">{{ obj.title }}</div>
+                <div style="opacity:0.75; font-size:12px; margin-top:4px;">
+                  {{ obj.model.maker }} {{ obj.model.name }}
+                </div>
+              </div>
+            </a>
+
+          {% elif kind == "post" %}
+            <a href="{% url 'post_detail' obj.id %}" style="text-decoration:none; color:inherit;">
+              {% if obj.main_image %}
+                <img src="{{ obj.main_image.image.url }}" alt="" style="width:100%; height:140px; object-fit:cover;">
+              {% else %}
+                <div style="width:100%; height:140px; background:#eee;"></div>
+              {% endif %}
+              <div style="padding:10px;">
+                <div style="font-weight:bold; line-height:1.2;">{{ obj.title }}</div>
+                <div style="opacity:0.75; font-size:12px; margin-top:4px;">
+                  by {{ obj.author.username }}
+                </div>
+              </div>
+            </a>
+
+          {% elif kind == "event" %}
+            <a href="{% url 'event_detail' obj.id %}" style="text-decoration:none; color:inherit;">
+              <div style="width:100%; height:140px; background:#f5f5f5; display:flex; align-items:center; justify-content:center;">
+                🎉
+              </div>
+              <div style="padding:10px;">
+                <div style="font-weight:bold; line-height:1.2;">{{ obj.title }}</div>
+                <div style="opacity:0.75; font-size:12px; margin-top:4px;">
+                  {% if obj.organizer_team %}Team: {{ obj.organizer_team.name }}{% else %}by {{ obj.organizer.username }}{% endif %}
+                </div>
+              </div>
+            </a>
+          {% endif %}
+        </div>
+      {% empty %}
+        <div style="opacity:0.7;">No items.</div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  // auto-scroll each slider
+  document.querySelectorAll(".js-slider").forEach(slider => {
+    const track = slider.querySelector(".js-track");
+    if (!track) return;
+
+    let dir = 1; // 1:right, -1:left
+    const speed = 0.6; // px per frame
+
+    function tick(){
+      if (!track) return;
+      track.scrollLeft += dir * speed;
+
+      const max = track.scrollWidth - track.clientWidth;
+      if (track.scrollLeft >= max - 1) dir = -1;
+      if (track.scrollLeft <= 1) dir = 1;
+
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+})();
+</script>

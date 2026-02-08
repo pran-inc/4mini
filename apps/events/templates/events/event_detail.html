@@ -4,6 +4,13 @@
 
 <h1>{{ event.title }}</h1>
 
+{% if event.image %}
+  <p>
+    <img src="{{ event.image.url }}" alt="" style="width:100%; max-width:900px; height:320px; object-fit:cover; border-radius:12px;">
+  </p>
+{% endif %}
+
+
 <p>
   Voting:
   <strong>{% if event.is_active %}OPEN{% else %}CLOSED{% endif %}</strong><br>

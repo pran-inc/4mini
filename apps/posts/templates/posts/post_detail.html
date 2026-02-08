@@ -14,12 +14,16 @@
 
 <div>
   <button class="js-react" data-reaction="like"
-          data-app="{{ target.app_label }}" data-model="{{ target.model }}" data-object-id="{{ target.object_id }}">
+          data-app="{{ target.app_label }}" data-model="{{ target.model }}" data-object-id="{{ target.object_id }}"
+          type="button"
+          style="opacity:{% if user_like %}1.0{% else %}0.6{% endif %};">
     👍 Like <span class="js-count">{{ like_count }}</span>
   </button>
 
   <button class="js-react" data-reaction="favorite"
-          data-app="{{ target.app_label }}" data-model="{{ target.model }}" data-object-id="{{ target.object_id }}">
+          data-app="{{ target.app_label }}" data-model="{{ target.model }}" data-object-id="{{ target.object_id }}"
+          type="button"
+          style="opacity:{% if user_fav %}1.0{% else %}0.6{% endif %}; margin-left:10px;">
     ⭐ Favorite <span class="js-count">{{ fav_count }}</span>
   </button>
 </div>
@@ -38,39 +42,4 @@
   </p>
 {% endif %}
 
-<script>
-function getCookie(name) {
-  const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-  return v ? v.pop() : '';
-}
-
-document.querySelectorAll(".js-react").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    const payload = {
-      app_label: btn.dataset.app,
-      model: btn.dataset.model,
-      object_id: btn.dataset.objectId,
-      reaction_type: btn.dataset.reaction,
-    };
-
-    const res = await fetch("/reactions/toggle/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      alert("ログインが必要か、エラーが発生しました");
-      return;
-    }
-
-    const data = await res.json();
-    btn.querySelector(".js-count").textContent = data.count;
-    btn.style.opacity = data.active ? "1.0" : "0.6";
-  });
-});
-</script>
 {% endblock %}

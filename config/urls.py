@@ -7,6 +7,8 @@ from django.urls import include, path
 urlpatterns = [
     path("admin/", admin.site.urls),
 
+    path("", include("apps.pages.urls")),  # ✅ 追加（トップ）
+
     path("accounts/", include("django.contrib.auth.urls")),
     path("signup/", include("apps.accounts.urls")),
     path("account/", include("apps.accounts.urls")),
@@ -23,3 +25,4 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

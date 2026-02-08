@@ -1,18 +1,48 @@
 {% extends "base.html" %}
 {% block title %}Events{% endblock %}
 {% block content %}
+
 <h1>Events</h1>
 
-<p><a href="{% url 'event_create' %}">Create Event</a></p>
+<div style="
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap:16px;
+">
+  {% for event in events %}
+    <a href="{% url 'event_detail' event.id %}" style="text-decoration:none; color:inherit;">
+      <div style="border:1px solid #ddd; border-radius:12px; overflow:hidden;">
+        {% if event.image %}
+          <img src="{{ event.image.url }}"
+               alt=""
+               style="width:100%; height:160px; object-fit:cover;">
+        {% else %}
+          <div style="width:100%; height:160px; background:#f2f2f2; display:flex; align-items:center; justify-content:center;">
+            🎉
+          </div>
+        {% endif %}
 
-<ul>
-  {% for e in events %}
-    <li>
-      <a href="{% url 'event_detail' e.id %}">{{ e.title }}</a>
-      <small>by {{ e.organizer.username }}</small>
-    </li>
+        <div style="padding:10px;">
+          <div style="font-weight:bold; line-height:1.2;">{{ event.title }}</div>
+          <div style="opacity:0.75; font-size:12px; margin-top:6px;">
+            {% if event.is_active %}OPEN{% else %}CLOSED{% endif %}
+            ・ {{ event.starts_at }}
+            {% if event.ends_at %}〜{{ event.ends_at }}{% endif %}
+          </div>
+
+          <div style="opacity:0.75; font-size:12px; margin-top:6px;">
+            {% if event.organizer_team %}
+              Team: {{ event.organizer_team.name }}
+            {% else %}
+              by {{ event.organizer.username }}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </a>
   {% empty %}
-    <li>No events yet.</li>
+    <p>No events.</p>
   {% endfor %}
-</ul>
+</div>
+
 {% endblock %}

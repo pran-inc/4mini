@@ -1,12 +1,153 @@
 {% extends "base.html" %}
-{% block title %}Create Event{% endblock %}
+{% block title %}Event{% endblock %}
 {% block content %}
-<h1>Create Event</h1>
+
+<h1>Event</h1>
 
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %}
-  {{ form.as_p }}
+
+  {{ form.non_field_errors }}
+
+  {# ✅ temp_id は 반드시 form の中に置く（POSTに乗せるため） #}
+  <input type="hidden" name="temp_event_image_id" value="{% if temp_event_image %}{{ temp_event_image.id }}{% endif %}">
+  <input type="hidden" name="temp_sponsor_logo_id" value="{% if temp_sponsor_logo %}{{ temp_sponsor_logo.id }}{% endif %}">
+
+  <!-- 基本 -->
+  <fieldset style="border:1px solid #ddd; padding:12px; border-radius:12px; margin-bottom:14px;">
+    <legend style="padding:0 6px;">Basic</legend>
+
+    <p>
+      {{ form.title.label_tag }}<br>
+      {{ form.title }}
+      {{ form.title.errors }}
+    </p>
+
+    <p>
+      {{ form.description.label_tag }}<br>
+      {{ form.description }}
+      {{ form.description.errors }}
+    </p>
+
+    <p>
+      {{ form.organizer_team.label_tag }}<br>
+      {{ form.organizer_team }}
+      {{ form.organizer_team.errors }}
+    </p>
+
+    <p>
+      {{ form.starts_at.label_tag }}<br>
+      {{ form.starts_at }}
+      {{ form.starts_at.errors }}
+    </p>
+
+    <p>
+      {{ form.ends_at.label_tag }}<br>
+      {{ form.ends_at }}
+      {{ form.ends_at.errors }}
+    </p>
+
+    <p>
+      {{ form.is_published }} {{ form.is_published.label_tag }}
+      {{ form.is_published.errors }}
+    </p>
+
+    <p>
+      {{ form.winners_public }} {{ form.winners_public.label_tag }}
+      {{ form.winners_public.errors }}
+    </p>
+  </fieldset>
+
+  <!-- イベント画像 -->
+  <fieldset style="border:1px solid #ddd; padding:12px; border-radius:12px; margin-bottom:14px;">
+    <legend style="padding:0 6px;">Event Image</legend>
+
+    <p>
+      {{ form.image.label_tag }}<br>
+      {{ form.image }}
+      {{ form.image.errors }}
+    </p>
+
+    {# ✅ 表示優先度：既存（編集時）→ temp（エラーで戻った時） #}
+    {% if form.instance.image %}
+      <p style="margin:8px 0;">Current:</p>
+      <img src="{{ form.instance.image.url }}" alt=""
+           style="max-width:720px; width:100%; height:220px; object-fit:cover; border-radius:12px;">
+    {% elif temp_event_image %}
+      <p style="margin:8px 0;">Selected (temp):</p>
+      <img src="{{ temp_event_image.file.url }}" alt=""
+           style="max-width:720px; width:100%; height:220px; object-fit:cover; border-radius:12px;">
+    {% endif %}
+
+    <!-- 選択中プレビュー（JSで即時表示） -->
+    <div id="preview-event-image" style="max-width:720px; margin-top:10px;"></div>
+  </fieldset>
+
+  <!-- スポンサー -->
+  <fieldset style="border:1px solid #ddd; padding:12px; border-radius:12px; margin-bottom:14px;">
+    <legend style="padding:0 6px;">Sponsor</legend>
+
+    <p>
+      {{ form.sponsor_name.label_tag }}<br>
+      {{ form.sponsor_name }}
+      {{ form.sponsor_name.errors }}
+    </p>
+
+    <p>
+      {{ form.sponsor_url.label_tag }}<br>
+      {{ form.sponsor_url }}
+      {{ form.sponsor_url.errors }}
+    </p>
+
+    <p>
+      {{ form.sponsor_message.label_tag }}<br>
+      {{ form.sponsor_message }}
+      {{ form.sponsor_message.errors }}
+    </p>
+
+    <p>
+      {{ form.sponsor_logo.label_tag }}<br>
+      {{ form.sponsor_logo }}
+      {{ form.sponsor_logo.errors }}
+    </p>
+
+    {# ✅ 表示優先度：既存（編集時）→ temp（エラーで戻った時） #}
+    {% if form.instance.sponsor_logo %}
+      <p style="margin:8px 0;">Current logo:</p>
+      <img src="{{ form.instance.sponsor_logo.url }}" alt=""
+           style="max-width:360px; width:100%; height:160px; object-fit:cover; border-radius:12px;">
+    {% elif temp_sponsor_logo %}
+      <p style="margin:8px 0;">Selected logo (temp):</p>
+      <img src="{{ temp_sponsor_logo.file.url }}" alt=""
+           style="max-width:360px; width:100%; height:160px; object-fit:cover; border-radius:12px;">
+    {% endif %}
+
+    <!-- 選択中プレビュー（JSで即時表示） -->
+    <div id="preview-sponsor-logo" style="max-width:360px; margin-top:10px;"></div>
+  </fieldset>
+
   <button type="submit">Save</button>
 </form>
+
+<script>
+(function(){
+  // Event image preview
+  const ev = document.getElementById("id_image");
+  if (ev) {
+    ev.setAttribute("data-preview", "single");
+    ev.setAttribute("data-preview-target", "#preview-event-image");
+  }
+
+  // Sponsor logo preview
+  const sp = document.getElementById("id_sponsor_logo");
+  if (sp) {
+    sp.setAttribute("data-preview", "single");
+    sp.setAttribute("data-preview-target", "#preview-sponsor-logo");
+  }
+
+  // file_previews.js の保険（テンプレ差し替え等）
+  if (window.bindFilePreviews) window.bindFilePreviews(document);
+})();
+</script>
 
 {% endblock %}

@@ -1,51 +1,206 @@
+{% load static %}
 <!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8">
+
+  <meta name="robots" content="noindex, nofollow">
+
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Cub Meet{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+
 </head>
+
 <body>
-  <nav>
-    <a href="/vehicles/">Vehicles</a> |
-    <a href="/posts/">Posts</a> |
-    <a href="/vehicles/new/">Add Vehicle</a> |
-    <a href="/posts/new/">Add Post</a> |
-    <a href="{% url 'event_list' %}">Events</a> |
+  <header class="app-header">
+    <div class="app-header-inner">
+      <strong><a href="/">Cub Meet</a></strong>
+
+      <!-- PC Nav -->
+      <nav class="pc-nav">
+        <a href="{% url 'vehicle_list' %}">Vehicles</a>
+        <a href="{% url 'post_list' %}">Posts</a>
+        <a href="{% url 'event_list' %}">Events</a>
+
+        {% if user.is_authenticated %}
+          <div class="dd">
+            <button>+ Create ▾</button>
+            <div class="dd-menu">
+              <a href="{% url 'vehicle_create_quick' %}">Add Vehicle</a>
+              <a href="{% url 'post_create' %}">Add Post</a>
+              <a href="{% url 'event_create' %}">Add Event</a>
+              <a href="{% url 'team_create' %}">Add Team</a>
+            </div>
+          </div>
+
+          <div class="dd">
+            <button>My ▾</button>
+            <div class="dd-menu">
+              <a href="{% url 'profile_detail' user.username %}">My Profile</a>
+              <a href="{% url 'account_edit' %}">Edit Account</a>
+              <a href="{% url 'my_team_invites' %}">Invites{% if team_invite_count %} ({{ team_invite_count }}){% endif %}</a>
+            </div>
+          </div>
+
+          <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button>Logout</button>
+          </form>
+        {% else %}
+          <a href="{% url 'login' %}">Login</a>
+          <a href="{% url 'signup' %}">Sign up</a>
+        {% endif %}
+      </nav>
+
+      <!-- Hamburger -->
+      <button class="hamburger" onclick="document.getElementById('mobileMenu').style.display='block'">☰</button>
+    </div>
+  </header>
+
+  <!-- Mobile Menu -->
+  <div id="mobileMenu" class="mobile-menu">
+    <a href="#" onclick="this.parentNode.style.display='none'">✕ Close</a>
+
+    <a href="{% url 'vehicle_list' %}">🏍 Vehicles</a>
+    <a href="{% url 'post_list' %}">📝 Posts</a>
+    <a href="{% url 'event_list' %}">🎉 Events</a>
 
     {% if user.is_authenticated %}
-      <a href="{% url 'profile_detail' user.username %}">My Profile</a> |
-
-      {% if team_invite_count and team_invite_count > 0 %}
-        <a href="{% url 'my_team_invites' %}" style="font-weight:bold;">
-          🔔 Invites ({{ team_invite_count }})
-        </a> |
-      {% else %}
-        <a href="{% url 'my_team_invites' %}">Invites</a> |
-      {% endif %}
-
-      Hello, {{ user.username }} |
-      <form action="{% url 'logout' %}" method="post" style="display:inline;">
+      <a href="{% url 'vehicle_create_quick' %}">➕ Add Vehicle</a>
+      <a href="{% url 'post_create' %}">➕ Add Post</a>
+      <a href="{% url 'event_create' %}">➕ Add Event</a>
+      <a href="{% url 'team_create' %}">➕ Add Team</a>
+      <a href="{% url 'profile_detail' user.username %}">👤 My Profile</a>
+      <a href="{% url 'my_team_invites' %}">🔔 Invites{% if team_invite_count %} ({{ team_invite_count }}){% endif %}</a>
+      <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
-        <button type="submit">Logout</button>
+        <button style="margin-top:20px;">Logout</button>
       </form>
     {% else %}
-      <a href="{% url 'login' %}">Login</a> |
+      <a href="{% url 'login' %}">Login</a>
       <a href="{% url 'signup' %}">Sign up</a>
     {% endif %}
-  </nav>
+  </div>
 
-  <hr>
 
-  {% if messages %}
-    <ul>
-      {% for message in messages %}
-        <li>{{ message }}</li>
-      {% endfor %}
-    </ul>
-    <hr>
-  {% endif %}
+  <main class="wrapper">
 
-  {% block content %}{% endblock %}
+    {% if messages %}
+      <ul>
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+
+  </main>
+
+
+  <footer class="app-footer" id="appFooter">
+    <div class="app-footer-inner">
+
+      <a href="{% url 'vehicle_list' %}" data-match-prefix="/vehicles/">
+        <span class="icon">🏍</span>
+        <span class="label">Vehicles</span>
+      </a>
+
+      <a href="{% url 'post_list' %}" data-match-prefix="/posts/">
+        <span class="icon">📝</span>
+        <span class="label">Posts</span>
+      </a>
+
+      <!-- Top（中央・強調） -->
+      <a href="{% url 'home' %}" class="is-top" data-match-exact="/">
+        <span class="top-bubble">
+          <span class="icon">🏠</span>
+        </span>
+        <span class="label">Top</span>
+      </a>
+
+      <!-- My + 招待バッジ -->
+      {% if user.is_authenticated %}
+        <a href="{% url 'profile_detail' user.username %}" data-match-prefix="/accounts/">
+          <span class="icon">👤</span>
+          <span class="label">My</span>
+
+          {% if team_invite_count and team_invite_count > 0 %}
+            <span class="invite-badge">{{ team_invite_count }}</span>
+          {% endif %}
+        </a>
+      {% else %}
+        <a href="{% url 'login' %}">
+          <span class="icon">👤</span>
+          <span class="label">Login</span>
+        </a>
+      {% endif %}
+
+      <a href="{% url 'event_list' %}" data-match-prefix="/events/">
+        <span class="icon">🎉</span>
+        <span class="label">Events</span>
+      </a>
+    </div>
+  </footer>
+
+
+<script src="{% static 'js/file_previews.js' %}"></script>
+
+<script src="{% static 'js/reactions.js' %}"></script>
+<script>
+(function(){
+  function normalizePath(path) {
+    // クエリ/ハッシュ除去し、末尾スラッシュを統一
+    const p = (path || "/").split("?")[0].split("#")[0];
+    if (p === "/") return "/";
+    return p.endsWith("/") ? p : (p + "/");
+  }
+
+  const current = normalizePath(window.location.pathname);
+  const links = document.querySelectorAll("#appFooter a");
+
+  let best = null;
+  let bestLen = -1;
+
+  links.forEach(a => {
+    const exact = a.getAttribute("data-match-exact");
+    const prefix = a.getAttribute("data-match-prefix");
+
+    if (exact) {
+      if (normalizePath(exact) === current) {
+        best = a;
+        bestLen = 9999; // exact は最優先
+      }
+      return;
+    }
+
+    if (prefix) {
+      const pref = normalizePath(prefix);
+      if (current.startsWith(pref) && pref.length > bestLen) {
+        best = a;
+        bestLen = pref.length;
+      }
+      return;
+    }
+
+    // 何も指定がない場合は href の pathname で prefix 判定（保険）
+    try {
+      const url = new URL(a.getAttribute("href"), window.location.origin);
+      const hp = normalizePath(url.pathname);
+      if (current.startsWith(hp) && hp.length > bestLen) {
+        best = a;
+        bestLen = hp.length;
+      }
+    } catch (e) {}
+  });
+
+  if (best) best.classList.add("is-active");
+})();
+</script>
 </body>
 </html>

@@ -15,6 +15,16 @@ from .forms import VehiclePartForm, VehicleQuickForm, VehicleDetailForm
 from .models import Part, UserVehicle, VehicleImage, VehiclePart
 from .models import sync_vehicle_main_image
 from apps.common.utils import delete_queryset_with_files
+from django.contrib.contenttypes.models import ContentType
+from apps.interactions.models import Reaction, ReactionType
+
+from apps.common.utils import (
+    save_temp_uploads_multi,
+    get_temp_uploads_for_user,
+    delete_temps,
+)
+
+
 
 def _delete_image_files(obj) -> None:
     """
@@ -74,43 +84,69 @@ def _apply_image_order(vehicle: UserVehicle, order_json: str) -> None:
 @login_required
 def vehicle_create_quick(request):
     """
-    Step1: model/title/images だけ登録
-    保存できたら confirm へ
+    Step1: model/title/images だけ
+    - 入力エラーで戻っても画像プレビューが消えないように temp に保存
     """
+    temp_images = []
+
     if request.method == "POST":
         form = VehicleQuickForm(request.POST, request.FILES)
+
+        # hidden で持ってきた temp ids（JSON）
+        temp_images = get_temp_uploads_for_user(
+            request.user,
+            request.POST.get("temp_vehicle_image_ids", ""),
+            purpose="vehicle_images",
+        )
+
+        # 今回新しく選んだファイルがあれば「入れ替え」扱いにする（古いtempは捨てる）
+        new_files = request.FILES.getlist("images")
+        if new_files:
+            delete_temps(temp_images)
+            temp_images = save_temp_uploads_multi(
+                request.user, new_files, purpose="vehicle_images", max_files=10
+            )
+
         if form.is_valid():
             with transaction.atomic():
                 vehicle = form.save(commit=False)
                 vehicle.owner = request.user
                 vehicle.save()
 
-                files = form.cleaned_data.get("images", [])
-                for i, f in enumerate(files[:10]):
-                    VehicleImage.objects.create(vehicle=vehicle, image=f, sort_order=i)
+                # ✅ 実ファイルは temp_images から作る
+                for i, t in enumerate(temp_images[:10]):
+                    # VehicleImage.image に temp のファイルをそのまま渡せる（FileField）
+                    VehicleImage.objects.create(vehicle=vehicle, image=t.file, sort_order=i)
 
-                # 左端＝メイン（画像が無くてもOK）
+                # 左端＝メイン同期（画像なしでもOK）
                 sync_vehicle_main_image(vehicle.id)
 
+                # ✅ 成功したら temp を破棄
+                delete_temps(temp_images)
+
             return redirect("vehicle_create_confirm", pk=vehicle.pk)
+
     else:
         form = VehicleQuickForm()
 
-    return render(request, "vehicles/vehicle_quick_form.html", {"form": form})
-
-
-
+    return render(request, "vehicles/vehicle_quick_form.html", {
+        "form": form,
+        "temp_images": temp_images,
+        "temp_vehicle_image_ids_json": json.dumps([t.id for t in temp_images]),
+    })
 
 @login_required
 def vehicle_create_confirm(request, pk: int):
-    vehicle = get_object_or_404(
-        UserVehicle.objects.select_related("model", "main_image"),
-        pk=pk,
-        owner=request.user
-    )
+    """
+    登録内容の確認（confirm / edit / discard）
+    - confirm: 登録確定 → vehicle_detailへ
+    - edit: 編集へ → vehicle_editへ
+    - discard: 破棄 → vehicle削除して vehicle_listへ
+    """
+    vehicle = get_object_or_404(UserVehicle, pk=pk, owner=request.user)
 
     if request.method == "POST":
-        action = request.POST.get("action")
+        action = request.POST.get("action", "")
 
         if action == "confirm":
             messages.success(request, "車両を登録しました。")
@@ -119,19 +155,17 @@ def vehicle_create_confirm(request, pk: int):
         if action == "edit":
             return redirect("vehicle_edit", pk=vehicle.pk)
 
-    if action == "discard":
-        with transaction.atomic():
-            delete_queryset_with_files(
-                VehicleImage.objects.filter(vehicle=vehicle),
-                field_names=("thumb", "image")
-            )
-            vehicle.delete()
+        if action == "discard":
+            with transaction.atomic():
+                # 画像などが CASCADE ならこれだけでOK
+                vehicle.delete()
+            messages.info(request, "車両登録を破棄しました。")
+            return redirect("vehicle_list")
 
-        messages.info(request, "登録を破棄しました。")
-        return redirect("vehicle_list")
+        messages.error(request, "操作が不正です。")
+        return redirect("vehicle_create_confirm", pk=vehicle.pk)
 
     return render(request, "vehicles/vehicle_create_confirm.html", {"vehicle": vehicle})
-
 
 
 def vehicle_list(request):
@@ -144,6 +178,7 @@ def vehicle_list(request):
 
 
 def vehicle_detail(request, pk: int):
+    # 詳細は全画像が必要なので prefetch
     image_qs = VehicleImage.objects.order_by("sort_order", "id")
 
     vehicle = get_object_or_404(
@@ -159,9 +194,47 @@ def vehicle_detail(request, pk: int):
         .order_by("part__category__sort_order", "part__name", "id")
     )
 
+    # ✅ Like / Favorite（postsと同じ）
+    ct = ContentType.objects.get_for_model(UserVehicle)
+
+    like_count = Reaction.objects.filter(
+        reaction_type=ReactionType.LIKE,
+        content_type=ct,
+        object_id=vehicle.id,
+    ).count()
+
+    fav_count = Reaction.objects.filter(
+        reaction_type=ReactionType.FAVORITE,
+        content_type=ct,
+        object_id=vehicle.id,
+    ).count()
+
+    user_like = False
+    user_fav = False
+    if request.user.is_authenticated:
+        user_like = Reaction.objects.filter(
+            user=request.user,
+            reaction_type=ReactionType.LIKE,
+            content_type=ct,
+            object_id=vehicle.id,
+        ).exists()
+        user_fav = Reaction.objects.filter(
+            user=request.user,
+            reaction_type=ReactionType.FAVORITE,
+            content_type=ct,
+            object_id=vehicle.id,
+        ).exists()
+
     return render(request, "vehicles/vehicle_detail.html", {
         "vehicle": vehicle,
         "parts": parts,
+
+        # ✅ reactions用
+        "like_count": like_count,
+        "fav_count": fav_count,
+        "user_like": user_like,
+        "user_fav": user_fav,
+        "target": {"app_label": ct.app_label, "model": ct.model, "object_id": vehicle.id},
     })
 
 

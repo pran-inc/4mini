@@ -27,15 +27,6 @@
     </div>
 
 
-
-{% if is_me %}
-  <p><a href="{% url 'team_create' %}">チームを作る</a></p>
-{% endif %}
-
-
-
-
-
     <div style="margin-top:10px; color:#444;">
       {% if profile.bike_count is not None %}所有台数：{{ profile.bike_count }}台{% endif %}
       {% if profile.bike_years is not None %}

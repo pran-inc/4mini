@@ -1,0 +1,238 @@
+/* =========================
+   Base
+========================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Noto Sans JP", -apple-system, BlinkMacSystemFont,
+    "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  background: #f8f9fa;
+  color: #222;
+}
+
+a {
+  text-decoration: none;
+}
+
+/* =========================
+   Layout
+========================= */
+.wrapper {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* =========================
+   Header / Nav
+========================= */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+}
+
+nav.pc-nav {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+nav.pc-nav a {
+  text-decoration: none;
+  color: #111;
+}
+
+/* dropdown */
+.dd {
+  position: relative;
+}
+
+.dd > button {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.dd-menu {
+  display: none;
+  position: absolute;
+  top: 110%;
+  left: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 180px;
+  z-index: 1000;
+}
+
+.dd-menu a {
+  display: block;
+  padding: 10px;
+  text-decoration: none;
+  color: #111;
+}
+
+.dd-menu a:hover {
+  background: #f3f3f3;
+}
+
+.dd:hover .dd-menu {
+  display: block;
+}
+
+/* =========================
+   Hamburger / Mobile
+========================= */
+.hamburger {
+  display: none;
+  font-size: 22px;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.mobile-menu {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  z-index: 2000;
+  padding: 20px;
+  overflow: auto;
+}
+
+.mobile-menu a {
+  display: block;
+  padding: 14px 0;
+  font-size: 18px;
+  text-decoration: none;
+  color: #111;
+  border-bottom: 1px solid #eee;
+}
+
+/* =========================
+   Header
+========================= */
+.app-header {
+  width: 100%;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: center;
+}
+
+.app-header-inner {
+  width: 100%;
+  max-width: 1100px;
+  padding: 10px 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* =========================
+   Footer
+========================= */
+.app-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 68px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(0,0,0,0.08);
+
+  display: flex;
+  justify-content: center;
+  z-index: 1500;
+}
+
+.app-footer-inner {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+
+.app-footer a {
+  position: relative;
+  text-decoration: none;
+  color: #111;
+  font-size: 12px;
+  text-align: center;
+  width: 20%;
+  padding: 6px 0;
+  opacity: 0.75;
+}
+
+.app-footer a .icon {
+  display: block;
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+.app-footer a.is-active {
+  opacity: 1;
+  font-weight: 700;
+}
+
+/* Top（中央） */
+.app-footer a.is-top {
+  top: -14px;
+  opacity: 1;
+}
+
+.top-bubble {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: whitesmoke;
+  backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+  margin: 0 auto;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+}
+
+.app-footer a.is-top .icon {
+  font-size: 22px;
+  color: #fff;
+}
+
+.app-footer a.is-top .label {
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+/* Invites badge */
+.invite-badge {
+  position: absolute;
+  top: 4px;
+  right: 22%;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #e53935;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+}

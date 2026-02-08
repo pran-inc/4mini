@@ -79,6 +79,21 @@
   {{ form.images.errors }}
   {{ form.images }}
 
+  <div id="preview-vehicle-images-add" style="max-width:920px; margin-top:10px;"></div>
+
+
+<script>
+(function(){
+  const el = document.getElementById("id_images");
+  if (el) {
+    el.setAttribute("data-preview","multi");
+    el.setAttribute("data-preview-target","#preview-vehicle-images-add");
+  }
+  if (window.bindFilePreviews) window.bindFilePreviews(document);
+})();
+</script>
+
+
   <div style="margin-top:16px;">
     <button type="submit">Save</button>
   </div>
@@ -443,6 +458,5 @@
   });
 })();
 </script>
-
 
 {% endblock %}

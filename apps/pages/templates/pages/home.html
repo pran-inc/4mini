@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}4mini{% endblock %}
+{% block content %}
+
+<h1 style="margin:12px 0 4px;">4mini</h1>
+<p style="margin:0 0 16px; opacity:0.8;">
+  4mini オーナーのための、愛車・カスタム・イベントをつなぐ場所
+</p>
+
+<!-- NEWS -->
+<section style="border:1px solid #ddd; border-radius:12px; padding:12px; margin-bottom:18px;">
+  <h2 style="margin:0 0 10px; font-size:18px;">News</h2>
+
+  <ul style="margin:0; padding-left:18px;">
+    {% for n in news_items|slice:":3" %}
+      <li style="margin-bottom:6px;">
+        {% if n.url %}
+          <a href="{{ n.url }}">{{ n.title }}</a>
+        {% else %}
+          <span class="js-news-open" data-body="{{ n.body|escape }}" style="cursor:pointer; text-decoration:underline;">
+            {{ n.title }}
+          </span>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+
+  {% if news_items|length > 3 %}
+    <details style="margin-top:10px;">
+      <summary style="cursor:pointer;">More</summary>
+      <ul style="margin:10px 0 0; padding-left:18px;">
+        {% for n in news_items|slice:"3:" %}
+          <li style="margin-bottom:6px;">
+            {% if n.url %}
+              <a href="{{ n.url }}">{{ n.title }}</a>
+            {% else %}
+              <span class="js-news-open" data-body="{{ n.body|escape }}" style="cursor:pointer; text-decoration:underline;">
+                {{ n.title }}
+              </span>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </details>
+  {% endif %}
+</section>
+
+<!-- Sliders -->
+{% include "pages/_slider_section.html" with title="Vehicles" items=vehicles kind="vehicle" %}
+{% include "pages/_slider_section.html" with title="Posts" items=posts kind="post" %}
+{% include "pages/_slider_section.html" with title="Events" items=events kind="event" %}
+
+<!-- simple modal (text only) -->
+<dialog id="newsDialog" style="max-width:560px; width:92%;">
+  <div id="newsBody" style="white-space:pre-wrap;"></div>
+  <form method="dialog" style="margin-top:12px;">
+    <button>Close</button>
+  </form>
+</dialog>
+
+<script>
+(function(){
+  // news modal
+  const dlg = document.getElementById("newsDialog");
+  const body = document.getElementById("newsBody");
+  document.querySelectorAll(".js-news-open").forEach(el => {
+    el.addEventListener("click", () => {
+      body.textContent = el.dataset.body || "";
+      if (dlg && dlg.showModal) dlg.showModal();
+      else alert(body.textContent);
+    });
+  });
+})();
+</script>
+
+{% endblock %}

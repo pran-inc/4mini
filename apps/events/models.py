@@ -28,6 +28,9 @@ class Event(models.Model):
     title = models.CharField(max_length=150)
     description = models.TextField(blank=True, default="")
 
+    # ✅ 追加：イベント画像
+    image = models.ImageField(upload_to="events/%Y/%m/", blank=True, null=True)
+
     starts_at = models.DateTimeField(default=timezone.now)
     ends_at = models.DateTimeField(null=True, blank=True)
 

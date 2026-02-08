@@ -14,24 +14,76 @@ from .forms import EventForm, AwardForm
 from .models import Event, EventEntry, EventVote, Award
 from apps.teams.models import TeamMembership, MembershipStatus, MembershipRole
 
+from apps.common.utils import (
+    save_temp_upload,
+    get_temp_upload_for_user,
+    copy_temp_to_field,
+    delete_temp,
+)
+
+from .forms import EventForm
+from .models import Event
+
 
 def event_list(request):
     events = Event.objects.filter(is_published=True).order_by("-created_at")
     return render(request, "events/event_list.html", {"events": events})
 
 
+
+@login_required
 def event_create(request):
+    temp_event_image = None
+    temp_sponsor_logo = None
+
     if request.method == "POST":
-        form = EventForm(request.POST, request.FILES, user=request.user)  # ✅ user渡す
+        form = EventForm(request.POST, request.FILES, user=request.user)
+
+        # hiddenで持ってきた temp_id
+        temp_event_image = get_temp_upload_for_user(
+            request.user, request.POST.get("temp_event_image_id"), purpose="event_image"
+        )
+        temp_sponsor_logo = get_temp_upload_for_user(
+            request.user, request.POST.get("temp_sponsor_logo_id"), purpose="sponsor_logo"
+        )
+
+        # 新しくファイルが来たら temp を更新（＝上書き運用）
+        if request.FILES.get("image"):
+            # 古いtempがあれば消す（任意）
+            delete_temp(temp_event_image)
+            temp_event_image = save_temp_upload(request.user, request.FILES.get("image"), "event_image").temp
+
+        if request.FILES.get("sponsor_logo"):
+            delete_temp(temp_sponsor_logo)
+            temp_sponsor_logo = save_temp_upload(request.user, request.FILES.get("sponsor_logo"), "sponsor_logo").temp
+
         if form.is_valid():
             event = form.save(commit=False)
             event.organizer = request.user
+
+            # ✅ FILESが空でも temp があれば復元
+            if (not request.FILES.get("image")) and temp_event_image:
+                copy_temp_to_field(temp_event_image, event, "image")
+            if (not request.FILES.get("sponsor_logo")) and temp_sponsor_logo:
+                copy_temp_to_field(temp_sponsor_logo, event, "sponsor_logo")
+
             event.save()
+
+            # ✅ 成功したら temp を破棄
+            delete_temp(temp_event_image)
+            delete_temp(temp_sponsor_logo)
+
             messages.success(request, "イベントを作成しました。")
             return redirect("event_detail", event_id=event.id)
+
     else:
-        form = EventForm(user=request.user)  # ✅ user渡す
-    return render(request, "events/event_form.html", {"form": form})
+        form = EventForm(user=request.user)
+
+    return render(request, "events/event_form.html", {
+        "form": form,
+        "temp_event_image": temp_event_image,
+        "temp_sponsor_logo": temp_sponsor_logo,
+    })
 
 
 def _entries_with_votes(event: Event):
@@ -92,20 +144,55 @@ def _can_manage_event(user, event) -> bool:
 def event_edit(request, event_id: int):
     event = get_object_or_404(Event, id=event_id)
 
-    if not _can_manage_event(request.user, event):
+    if event.organizer_id != request.user.id:
         return HttpResponseForbidden("Not allowed")
 
+    temp_event_image = None
+    temp_sponsor_logo = None
+
     if request.method == "POST":
-        form = EventForm(request.POST, request.FILES, instance=event, user=request.user)  # ✅ user渡す
+        form = EventForm(request.POST, request.FILES, instance=event, user=request.user)
+
+        temp_event_image = get_temp_upload_for_user(
+            request.user, request.POST.get("temp_event_image_id"), purpose="event_image"
+        )
+        temp_sponsor_logo = get_temp_upload_for_user(
+            request.user, request.POST.get("temp_sponsor_logo_id"), purpose="sponsor_logo"
+        )
+
+        if request.FILES.get("image"):
+            delete_temp(temp_event_image)
+            temp_event_image = save_temp_upload(request.user, request.FILES.get("image"), "event_image").temp
+
+        if request.FILES.get("sponsor_logo"):
+            delete_temp(temp_sponsor_logo)
+            temp_sponsor_logo = save_temp_upload(request.user, request.FILES.get("sponsor_logo"), "sponsor_logo").temp
+
         if form.is_valid():
-            form.save()
+            event = form.save(commit=False)
+
+            if (not request.FILES.get("image")) and temp_event_image:
+                copy_temp_to_field(temp_event_image, event, "image")
+            if (not request.FILES.get("sponsor_logo")) and temp_sponsor_logo:
+                copy_temp_to_field(temp_sponsor_logo, event, "sponsor_logo")
+
+            event.save()
+
+            delete_temp(temp_event_image)
+            delete_temp(temp_sponsor_logo)
+
             messages.success(request, "イベントを更新しました。")
             return redirect("event_detail", event_id=event.id)
+
     else:
-        form = EventForm(instance=event, user=request.user)  # ✅ user渡す
+        form = EventForm(instance=event, user=request.user)
 
-    return render(request, "events/event_form.html", {"form": form})
-
+    return render(request, "events/event_form.html", {
+        "form": form,
+        "event": event,
+        "temp_event_image": temp_event_image,
+        "temp_sponsor_logo": temp_sponsor_logo,
+    })
 
 
 def event_gallery(request, event_id: int):

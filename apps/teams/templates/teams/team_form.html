@@ -2,12 +2,88 @@
 {% block title %}Team{% endblock %}
 {% block content %}
 
-<h1>{% if mode == "create" %}Create Team{% else %}Edit Team{% endif %}</h1>
+<h1>Team</h1>
 
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %}
-  {{ form.as_p }}
+  {{ form.non_field_errors }}
+
+  <!-- temp id（POSTで保持） -->
+  <input type="hidden" name="temp_team_logo_id"
+         value="{% if temp_team_logo %}{{ temp_team_logo.id }}{% endif %}">
+  <input type="hidden" name="temp_team_main_id"
+         value="{% if temp_team_main %}{{ temp_team_main.id }}{% endif %}">
+
+  <p>
+    {{ form.name.label_tag }}<br>
+    {{ form.name }} {{ form.name.errors }}
+  </p>
+
+  <p>
+    {{ form.description.label_tag }}<br>
+    {{ form.description }} {{ form.description.errors }}
+  </p>
+
+  <p>
+    {{ form.prefecture.label_tag }}<br>
+    {{ form.prefecture }} {{ form.prefecture.errors }}
+  </p>
+
+  <hr>
+
+  <h3>Team Images</h3>
+
+  <!-- LOGO -->
+  <p>
+    {{ form.logo.label_tag }}<br>
+    {{ form.logo }} {{ form.logo.errors }}
+  </p>
+
+  {% if form.instance.logo %}
+    <img src="{{ form.instance.logo.url }}"
+         style="max-width:300px;height:140px;object-fit:cover;border-radius:10px;">
+  {% elif temp_team_logo %}
+    <img src="{{ temp_team_logo.file.url }}"
+         style="max-width:300px;height:140px;object-fit:cover;border-radius:10px;">
+  {% endif %}
+
+  <div id="preview-team-logo" style="margin-top:10px;"></div>
+
+  <!-- MAIN IMAGE -->
+  <p style="margin-top:16px;">
+    {{ form.main_image.label_tag }}<br>
+    {{ form.main_image }} {{ form.main_image.errors }}
+  </p>
+
+  {% if form.instance.main_image %}
+    <img src="{{ form.instance.main_image.url }}"
+         style="max-width:720px;height:240px;object-fit:cover;border-radius:12px;">
+  {% elif temp_team_main %}
+    <img src="{{ temp_team_main.file.url }}"
+         style="max-width:720px;height:240px;object-fit:cover;border-radius:12px;">
+  {% endif %}
+
+  <div id="preview-team-main" style="margin-top:10px;"></div>
+
   <button type="submit">Save</button>
 </form>
+
+<script>
+(function(){
+  const logo = document.getElementById("id_logo");
+  if (logo) {
+    logo.setAttribute("data-preview","single");
+    logo.setAttribute("data-preview-target","#preview-team-logo");
+  }
+
+  const main = document.getElementById("id_main_image");
+  if (main) {
+    main.setAttribute("data-preview","single");
+    main.setAttribute("data-preview-target","#preview-team-main");
+  }
+
+  if (window.bindFilePreviews) window.bindFilePreviews(document);
+})();
+</script>
 
 {% endblock %}

@@ -15,10 +15,4 @@
   {% endfor %}
 </ul>
 
-{% if user.is_authenticated %}
-  <p><a href="{% url 'team_create' %}">＋ チームを作成</a></p>
-{% else %}
-  <p><a href="{% url 'login' %}?next={% url 'team_create' %}">ログインしてチームを作成</a></p>
-{% endif %}
-
 {% endblock %}

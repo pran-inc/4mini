@@ -5,32 +5,25 @@
 <h1>{{ vehicle.title }}</h1>
 <p>{{ vehicle.model.maker }} {{ vehicle.model.name }}</p>
 
-{% if user.is_authenticated and user.id == vehicle.owner_id %}
-  <p><a href="{% url 'vehicle_edit' vehicle.id %}">Edit vehicle</a></p>
-{% endif %}
-
 <hr>
 
 <!-- いいね / お気に入り（あなたの既存エンドポイントに合わせてください） -->
 {% if user.is_authenticated %}
-  <button class="js-reaction"
-          data-url="/reactions/toggle/"
-          data-type="vehicle"
-          data-id="{{ vehicle.id }}"
-          data-reaction="like"
-          type="button">
-    👍 Like (<span class="js-count">{{ like_count|default:0 }}</span>)
-  </button>
+  <div>
+    <button class="js-react" data-reaction="like"
+            data-app="{{ target.app_label }}" data-model="{{ target.model }}" data-object-id="{{ target.object_id }}"
+            type="button"
+            style="opacity:{% if user_like %}1.0{% else %}0.6{% endif %};">
+      👍 Like <span class="js-count">{{ like_count }}</span>
+    </button>
 
-  <button class="js-reaction"
-          data-url="/reactions/toggle/"
-          data-type="vehicle"
-          data-id="{{ vehicle.id }}"
-          data-reaction="favorite"
-          type="button"
-          style="margin-left:10px;">
-    ⭐ Favorite (<span class="js-count">{{ favorite_count|default:0 }}</span>)
-  </button>
+    <button class="js-react" data-reaction="favorite"
+            data-app="{{ target.app_label }}" data-model="{{ target.model }}" data-object-id="{{ target.object_id }}"
+            type="button"
+            style="opacity:{% if user_fav %}1.0{% else %}0.6{% endif %}; margin-left:10px;">
+      ⭐ Favorite <span class="js-count">{{ fav_count }}</span>
+    </button>
+  </div>
 {% else %}
   <p><a href="{% url 'login' %}?next={% url 'vehicle_detail' vehicle.id %}">Login</a> to like/favorite.</p>
 {% endif %}
@@ -169,50 +162,5 @@
     | <a href="{% url 'vehicle_delete_confirm' vehicle.id %}">Delete</a>
   </p>
 {% endif %}
-
-
-<script>
-(function() {
-  const buttons = document.querySelectorAll(".js-reaction");
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const url = btn.dataset.url;
-
-      const payload = new URLSearchParams();
-      payload.append("content_type", btn.dataset.type);
-      payload.append("object_id", btn.dataset.id);
-      payload.append("reaction_type", btn.dataset.reaction);
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": "{{ csrf_token }}",
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: payload.toString(),
-      });
-
-      if (res.redirected) {
-        window.location.href = res.url;
-        return;
-      }
-      if (!res.ok) {
-        alert("ログインが必要か、エラーが発生しました");
-        return;
-      }
-
-      const data = await res.json();
-
-      const countEl = btn.querySelector(".js-count");
-      if (countEl && typeof data.count !== "undefined") {
-        countEl.textContent = data.count;
-      }
-      if (typeof data.active !== "undefined") {
-        btn.style.opacity = data.active ? "1.0" : "0.6";
-      }
-    });
-  });
-})();
-</script>
 
 {% endblock %}
