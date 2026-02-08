@@ -1,6 +1,6 @@
 # apps/common/utils.py
 
-from __future__ import annotations
+# from __future__ import annotations
 from typing import Iterable, Sequence
 
 import os

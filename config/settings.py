@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-(@^-hf3mrjlv@th)iit3#c2l831uzl-v2r4mg@9pt(zqq6_%@&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [] # ローカル環境用
+# ALLOWED_HOSTS = ['4mini.club', 'www.4mini.club'] # 本番環境用
 
 
 # Application definition
@@ -100,6 +101,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     "default": {
+        # # 本番環境用
+        # 'ENGINE': 'django.db.backends.mysql',
+        # 'NAME': 'kikaomot_4mini',
+        # 'USER': 'kikaomot_tom',
+        # 'PASSWORD': 'p.r.a.n.2016',
+        # 'HOST': 'mysql2108.xserver.jp',
+        # 'PORT': '3306',
+
+        # ローカル環境用
         "ENGINE": "django.db.backends.mysql",
         "NAME": "4mini_db",
         "USER": "django",
@@ -146,16 +156,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
-AUTH_USER_MODEL = "accounts.User"
+# apps/common/static を使っているなら不要（ここが原因で落ちている）
+# STATICFILES_DIRS = [BASE_DIR / "static"]
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# settings.py
-SITE_ID = 1
+AUTH_USER_MODEL = "accounts.User"
 
+SITE_ID = 1
 LOGIN_REDIRECT_URL = "/vehicles/"
 LOGOUT_REDIRECT_URL = "/vehicles/"
