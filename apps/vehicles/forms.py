@@ -2,6 +2,7 @@
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 
 from .models import UserVehicle, VehiclePart, PartCategory, Part, Maker
 
@@ -14,21 +15,67 @@ class MultipleImageInput(forms.ClearableFileInput):
 
 
 class MultipleImageField(forms.Field):
+    """
+    <input type="file" multiple> を安全に受け取るためのField。
+
+    - request.FILES から複数が来たら list で入る
+    - 環境/実装によって UploadedFile 単体で入ってくることもある
+      => ここで必ず list に正規化して扱う
+    """
     widget = MultipleImageInput
 
     def to_python(self, data):
-        return data or []
+        # None/空なら空リスト
+        if not data:
+            return []
+
+        # すでに list/tuple ならそのまま list に
+        if isinstance(data, (list, tuple)):
+            return list(data)
+
+        # UploadedFile 単体なら list 化
+        if isinstance(data, UploadedFile):
+            return [data]
+
+        # それ以外は不正
+        return data  # validate で弾く
 
     def validate(self, value):
         super().validate(value)
+
+        # ここで必ず list であることを保証
+        if value is None:
+            return
         if not isinstance(value, list):
             raise ValidationError("Invalid upload.")
+
         if len(value) > 10:
             raise ValidationError("画像は最大10枚までです。")
+
         for f in value:
-            ct = getattr(f, "content_type", "")
+            # UploadedFile であること（InMemory/Temporary どちらもOK）
+            if not isinstance(f, UploadedFile):
+                raise ValidationError("Invalid upload.")
+
+            # content_type が取れるなら image/* のみ許可
+            ct = getattr(f, "content_type", "") or ""
             if ct and not ct.startswith("image/"):
                 raise ValidationError("画像ファイルのみアップロードできます。")
+
+            # 任意：拡張子ざっくり制限（必要なら）
+            # name = (getattr(f, "name", "") or "").lower()
+            # if name and not name.endswith((".jpg", ".jpeg", ".png", ".webp")):
+            #     raise ValidationError("png/jpg/webp のみアップロードできます。")
+
+    def clean(self, value):
+        """
+        DjangoのFieldフローに合わせて
+        to_python → validate → run_validators を確実に通す
+        """
+        value = self.to_python(value)
+        self.validate(value)
+        self.run_validators(value)
+        return value
 
 
 # ----------------------------
