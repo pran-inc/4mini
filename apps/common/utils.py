@@ -1,19 +1,11 @@
 # apps/common/utils.py
 
 # from __future__ import annotations
-from typing import Iterable, Sequence
-
-import os
+import os, json
 from dataclasses import dataclass
-from typing import Optional
-
+from typing import Iterable, Sequence, Optional, List
 from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
-
 from apps.common.models import TempUpload
-from typing import List
-
-
 
 def delete_filefields(obj, field_names: Sequence[str] = ("thumb", "image")) -> None:
     """
