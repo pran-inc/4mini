@@ -254,3 +254,562 @@ nav.pc-nav a {
   /* 見た目を自然に */
   word-break: break-word;
 }
+
+/* =========================
+   Page Fade Transition
+========================= */
+
+.page-transition {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.page-transition.is-visible {
+  opacity: 1;
+}
+
+.page-transition.is-leaving {
+  opacity: 0;
+}
+
+
+/* ===== Vehicle Edit / Common UI ===== */
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 18px 14px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.page-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.section {
+  margin-top: 12px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.section-title {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+}
+
+.subsection {
+  margin-top: 16px;
+}
+
+.subsection-title {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.section-divider {
+  height: 1px;
+  background: #eee;
+  margin: 14px 0;
+}
+
+.hr {
+  border: 0;
+  border-top: 1px solid #eee;
+  margin: 18px 0;
+}
+
+.muted {
+  color: #666;
+  margin: 6px 0 0 0;
+  font-size: 14px;
+}
+
+.help {
+  color: #555;
+  opacity: 0.9;
+  margin: 6px 0 10px 0;
+  font-size: 14px;
+}
+
+/* Card */
+.form-card {
+  border: 1px solid #eee;
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.notice-card {
+  border: 1px solid #e7e7e7;
+  background: #f6f7f9;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 12px 0 16px 0;
+}
+
+.notice-card__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.notice-card__title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.notice-card__desc {
+  color: #555;
+  font-size: 14px;
+}
+
+.notice-card__right a {
+  text-decoration: none;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  text-decoration: none;
+  color: #111;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.btn:hover { opacity: 0.9; }
+
+.btn-primary {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.btn-ghost {
+  background: #fff;
+}
+
+.btn-danger-ghost {
+  border-color: #e5b4b4;
+  color: #9c1b1b;
+  background: #fff;
+}
+
+.form-actions {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* File preview area */
+.preview {
+  max-width: 920px;
+  margin-top: 10px;
+}
+
+/* Images grid/cards */
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.img-card {
+  border: 2px solid #ddd;
+  padding: 8px;
+  border-radius: 12px;
+  background: #fff;
+  cursor: grab;
+}
+
+.img-card__img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}
+
+.img-card__meta {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.img-card__badge {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.img-card__delete {
+  font-size: 12px;
+  user-select: none;
+}
+
+.img-card__hint {
+  opacity: 0.6;
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+/* Parts */
+.part-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.part-form .form-row {
+  margin: 0 0 10px 0;
+}
+
+.part-form label {
+  display: inline-block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #333;
+}
+
+.part-form input[type="text"],
+.part-form input[type="number"],
+.part-form select,
+.part-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.part-picker {
+  border: 1px solid #eee;
+  padding: 12px;
+  border-radius: 12px;
+  margin: 10px 0 12px 0;
+  background: #fff;
+}
+
+.part-picker__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggle {
+  font-size: 13px;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 720px) {
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.form-error {
+  color: #b00;
+  margin: 10px 0 0 0;
+  font-size: 14px;
+}
+
+.empty {
+  opacity: 0.7;
+  padding: 10px 0;
+}
+
+.danger-zone {
+  margin-top: 16px;
+}
+
+.reaction-row {
+  display: flex;
+  gap: 10px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+
+.gallery {
+  max-width: 720px;
+}
+
+.gallery-main {
+  width: 100%;
+  height: 420px;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+.gallery-thumbs {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gallery-thumb {
+  width: 140px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.detail-list {
+  padding-left: 18px;
+}
+
+.description {
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+.part-category {
+  margin-top: 14px;
+}
+
+.part-item {
+  margin-bottom: 8px;
+}
+
+.part-note {
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
+/* ===== Lists: card grid ===== */
+.card-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  border: 1px solid #ddd;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.card-media {
+  width: 100%;
+}
+
+.card-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.card-img--placeholder {
+  background: #eee;
+}
+
+.card-body {
+  padding: 12px;
+}
+
+.card-title {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+
+.card-subtitle {
+  opacity: 0.8;
+  font-size: 13px;
+}
+
+.card-meta {
+  opacity: 0.8;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.card-text {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+
+  /* 3行で自然に省略（対応ブラウザは多い） */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+
+/* ===== Layout container ===== */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 14px;
+}
+
+/* flash messages */
+.flash-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  gap: 8px;
+}
+
+.flash-item {
+  border: 1px solid #e9e9e9;
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+
+.card-user {
+  margin-top: 6px;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.card-user-link {
+  text-decoration: none;
+  font-weight: 600;
+  color: #111;
+}
+
+.card-user-link:hover {
+  text-decoration: underline;
+}
+
+
+/* ===== Slider Section ===== */
+
+.slider-section {
+  margin: 18px 0;
+}
+
+.slider-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.slider-title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.slider-link {
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.slider-wrap {
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.slider-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 6px;
+}
+
+.slider-item {
+  min-width: 220px;
+  max-width: 220px;
+}
+
+.slider-event-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.card-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card-title-link:hover {
+  text-decoration: underline;
+}
+
+.card-stats {
+  margin-top: 8px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.card-stat {
+  font-size: 13px;
+  opacity: 0.9;
+  border: 1px solid #eee;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #fff;
+}

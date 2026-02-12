@@ -168,14 +168,35 @@ def vehicle_create_confirm(request, pk: int):
     return render(request, "vehicles/vehicle_create_confirm.html", {"vehicle": vehicle})
 
 
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import Count
+
 def vehicle_list(request):
-    vehicles = (
+    vehicles = list(
         UserVehicle.objects
         .select_related("model", "owner", "main_image")
         .order_by("-created_at")
     )
-    return render(request, "vehicles/vehicle_list.html", {"vehicles": vehicles})
 
+    # ✅ Like数をまとめて集計（N+1回避）
+    ct = ContentType.objects.get_for_model(UserVehicle)
+
+    like_map = dict(
+        Reaction.objects.filter(
+            reaction_type=ReactionType.LIKE,
+            content_type=ct,
+            object_id__in=[v.id for v in vehicles],
+        )
+        .values("object_id")
+        .annotate(c=Count("id"))
+        .values_list("object_id", "c")
+    )
+
+    # vehicles に like_count を付与（テンプレで v.like_count を使える）
+    for v in vehicles:
+        v.like_count = like_map.get(v.id, 0)
+
+    return render(request, "vehicles/vehicle_list.html", {"vehicles": vehicles})
 
 def vehicle_detail(request, pk: int):
     # 詳細は全画像が必要なので prefetch

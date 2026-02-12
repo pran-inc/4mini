@@ -2,80 +2,149 @@
 {% block title %}{{ vehicle.title }}{% endblock %}
 {% block content %}
 
-<h1>{{ vehicle.title }}</h1>
-<p>{{ vehicle.model.maker }} {{ vehicle.model.name }}</p>
+<div class="page">
 
-<hr>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ vehicle.title }}</h1>
+      <p class="muted">
+        {{ vehicle.model.maker }} {{ vehicle.model.name }}
+      </p>
+    </div>
 
-<!-- いいね / お気に入り（あなたの既存エンドポイントに合わせてください） -->
-{% if user.is_authenticated %}
-  <div>
-    <button class="js-react" data-reaction="like"
-            data-app="{{ target.app_label }}" data-model="{{ target.model }}" data-object-id="{{ target.object_id }}"
-            type="button"
-            style="opacity:{% if user_like %}1.0{% else %}0.6{% endif %};">
-      👍 Like <span class="js-count">{{ like_count }}</span>
-    </button>
-
-    <button class="js-react" data-reaction="favorite"
-            data-app="{{ target.app_label }}" data-model="{{ target.model }}" data-object-id="{{ target.object_id }}"
-            type="button"
-            style="opacity:{% if user_fav %}1.0{% else %}0.6{% endif %}; margin-left:10px;">
-      ⭐ Favorite <span class="js-count">{{ fav_count }}</span>
-    </button>
-  </div>
-{% else %}
-  <p><a href="{% url 'login' %}?next={% url 'vehicle_detail' vehicle.id %}">Login</a> to like/favorite.</p>
-{% endif %}
-
-
-<hr>
-
-<!-- ========================= -->
-<!-- メイン画像：サムネクリックで差し替え -->
-<!-- ========================= -->
-{% if vehicle.main_image %}
-  <div style="max-width:720px;">
-    <img id="js-main-image"
-         src="{{ vehicle.main_image.image.url }}"
-         alt=""
-         style="width:100%; height:420px; object-fit:cover; border-radius:12px;">
-
-    <!-- サムネ -->
-    {% if vehicle.images.all|length %}
-      <div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:10px;">
-        {% for img in vehicle.images.all %}
-          {% if img.thumb %}
-            <img class="js-thumb"
-                 src="{{ img.thumb.url }}"
-                 data-full="{{ img.image.url }}"
-                 alt=""
-                 style="width:140px; height:100px; object-fit:cover; border-radius:10px; cursor:pointer;
-                        border:2px solid {% if img.id == vehicle.main_image_id %}#111{% else %}transparent{% endif %};">
-          {% else %}
-            <img class="js-thumb"
-                 src="{{ img.image.url }}"
-                 data-full="{{ img.image.url }}"
-                 alt=""
-                 style="width:140px; height:100px; object-fit:cover; border-radius:10px; cursor:pointer;
-                        border:2px solid {% if img.id == vehicle.main_image_id %}#111{% else %}transparent{% endif %};">
-          {% endif %}
-        {% endfor %}
+    {% if user.is_authenticated and user.id == vehicle.owner_id %}
+      <div class="page-actions">
+        <a class="btn btn-ghost" href="{% url 'vehicle_edit' vehicle.id %}">Edit</a>
+        <a class="btn btn-danger-ghost" href="{% url 'vehicle_delete_confirm' vehicle.id %}">Delete</a>
       </div>
     {% endif %}
   </div>
-{% else %}
-  <p>No images.</p>
-{% endif %}
 
-{% if vehicle.specs %}
-  <h3>More specs</h3>
-  <ul>
-    {% for k, v in vehicle.specs.items %}
-      <li>{{ k }}: {{ v }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
+  <!-- Reaction -->
+  <div class="reaction-row">
+    {% if user.is_authenticated %}
+      <button class="btn btn-ghost js-react"
+              data-reaction="like"
+              data-app="{{ target.app_label }}"
+              data-model="{{ target.model }}"
+              data-object-id="{{ target.object_id }}"
+              type="button"
+              style="opacity:{% if user_like %}1.0{% else %}0.6{% endif %};">
+        👍 いいね <span class="js-count">{{ like_count }}</span>
+      </button>
+
+      <button class="btn btn-ghost js-react"
+              data-reaction="favorite"
+              data-app="{{ target.app_label }}"
+              data-model="{{ target.model }}"
+              data-object-id="{{ target.object_id }}"
+              type="button"
+              style="opacity:{% if user_fav %}1.0{% else %}0.6{% endif %};">
+        ⭐ お気に入り <span class="js-count">{{ fav_count }}</span>
+      </button>
+    {% else %}
+      <a class="btn btn-primary" href="{% url 'login' %}?next={% url 'vehicle_detail' vehicle.id %}">
+        Login to like/favorite
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- Images -->
+  <div class="section">
+    {% if vehicle.main_image %}
+      <div class="gallery">
+        <img id="js-main-image"
+             class="gallery-main"
+             src="{{ vehicle.main_image.image.url }}"
+             alt="">
+
+        {% if vehicle.images.all|length %}
+          <div class="gallery-thumbs">
+            {% for img in vehicle.images.all %}
+              {% if img.thumb %}
+                <img class="gallery-thumb js-thumb"
+                     src="{{ img.thumb.url }}"
+                     data-full="{{ img.image.url }}"
+                     alt=""
+                     style="border:2px solid {% if img.id == vehicle.main_image_id %}#111{% else %}transparent{% endif %};">
+              {% else %}
+                <img class="gallery-thumb js-thumb"
+                     src="{{ img.image.url }}"
+                     data-full="{{ img.image.url }}"
+                     alt=""
+                     style="border:2px solid {% if img.id == vehicle.main_image_id %}#111{% else %}transparent{% endif %};">
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="empty">No images.</div>
+    {% endif %}
+  </div>
+
+  <!-- Owner -->
+  <div class="section">
+    <h2 class="section-title">Owner</h2>
+    <a href="{% url 'profile_detail' vehicle.owner.username %}">
+      {{ vehicle.owner.username }}
+    </a>
+  </div>
+
+  <!-- Details -->
+  <div class="section">
+    <h2 class="section-title">Details</h2>
+    <ul class="detail-list">
+      {% if vehicle.year %}<li><strong>Year:</strong> {{ vehicle.year }}</li>{% endif %}
+      {% if vehicle.custom_summary %}<li><strong>Custom:</strong> {{ vehicle.custom_summary }}</li>{% endif %}
+    </ul>
+
+    {% if vehicle.description %}
+      <div class="description">
+        {{ vehicle.description|linebreaksbr }}
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Custom Parts -->
+  <div class="section">
+    <div class="section-header">
+      <h2 class="section-title">Custom Parts</h2>
+      {% if user.is_authenticated and user.id == vehicle.owner_id %}
+        <a class="btn btn-ghost" href="{% url 'vehicle_edit' vehicle.id %}#parts">+ Add Part</a>
+      {% endif %}
+    </div>
+
+    {% if parts %}
+      {% regroup parts by part.category as grouped %}
+      {% for g in grouped %}
+        <h3 class="part-category">{{ g.grouper.name }}</h3>
+        <ul class="part-list">
+          {% for vp in g.list %}
+            <li class="part-item">
+              <strong>
+                {% if vp.part %}
+                  {{ vp.part.name }}
+                {% else %}
+                  {{ vp.part_free_text }}
+                {% endif %}
+              </strong>
+              {% if vp.maker %} / {{ vp.maker.name }}{% endif %}
+              {% if vp.model_number %} / {{ vp.model_number }}{% endif %}
+              {% if vp.spec %} / {{ vp.spec }}{% endif %}
+              {% if vp.note %}
+                <div class="part-note">{{ vp.note|linebreaksbr }}</div>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endfor %}
+    {% else %}
+      <div class="empty">No custom parts yet.</div>
+    {% endif %}
+  </div>
+
+</div>
 
 <script>
 (function() {
@@ -94,73 +163,12 @@
       const full = thumb.dataset.full;
       if (!full) return;
 
-      // メイン差し替え
       mainImg.src = full;
-
-      // 選択枠の更新
       clearBorders();
       thumb.style.border = "2px solid #111";
     });
   });
 })();
 </script>
-
-<hr>
-
-<h2>Details</h2>
-
-
-<a href="{% url 'profile_detail' vehicle.owner.username %}">
-  {{ vehicle.owner.username }}
-</a>
-
-<ul>
-  {% if vehicle.year %}<li>Year: {{ vehicle.year }}</li>{% endif %}
-  {% if vehicle.custom_summary %}<li>Custom: {{ vehicle.custom_summary }}</li>{% endif %}
-</ul>
-
-{% if vehicle.description %}
-  <p>{{ vehicle.description|linebreaksbr }}</p>
-{% endif %}
-
-<hr>
-
-<h2>Custom Parts</h2>
-
-{% if user.is_authenticated and user.id == vehicle.owner_id %}
-  <p><a href="{% url 'vehicle_edit' vehicle.id %}#parts">+ Add Part</a></p>
-{% endif %}
-
-{% if parts %}
-  {% regroup parts by part.category as grouped %}
-  {% for g in grouped %}
-    <h3 style="margin-top:14px;">{{ g.grouper.name }}</h3>
-    <ul>
-      {% for vp in g.list %}
-        <li style="margin-bottom:6px;">
-        <strong>
-          {% if vp.part %}
-            {{ vp.part.name }}
-          {% else %}
-            {{ vp.part_free_text }}
-          {% endif %}
-        </strong>          {% if vp.maker %} / {{ vp.maker.name }}{% endif %}
-          {% if vp.model_number %} / {{ vp.model_number }}{% endif %}
-          {% if vp.spec %} / {{ vp.spec }}{% endif %}
-          {% if vp.note %}<div style="opacity:0.85;">{{ vp.note|linebreaksbr }}</div>{% endif %}
-        </li>
-      {% endfor %}
-    </ul>
-  {% endfor %}
-{% else %}
-  <p style="opacity:0.7;">No custom parts yet.</p>
-{% endif %}
-
-{% if user.is_authenticated and user.id == vehicle.owner_id %}
-  <p>
-    <a href="{% url 'vehicle_edit' vehicle.id %}">Edit</a>
-    | <a href="{% url 'vehicle_delete_confirm' vehicle.id %}">Delete</a>
-  </p>
-{% endif %}
 
 {% endblock %}
