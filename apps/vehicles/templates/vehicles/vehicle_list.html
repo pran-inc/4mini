@@ -2,54 +2,67 @@
 {% block title %}Vehicles{% endblock %}
 
 {% block content %}
-<h1>Vehicles</h1>
+<div class="page">
 
-<ul style="
-  list-style:none;
-  padding:0;
-  margin:0;
-  display:grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap:16px;
-">
-  {% for v in vehicles %}
-    <li style="
-      border:1px solid #ddd;
-      border-radius:14px;
-      padding:12px;
-      background:#fff;
-    ">
-      <a href="{% url 'vehicle_detail' v.id %}"
-         style="text-decoration:none; color:inherit;">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Vehicles</h1>
+      <p class="muted">登録された車両一覧です。</p>
+    </div>
+  </div>
 
-        {% if v.main_image %}
-          {% if v.main_image.thumb %}
-            <img src="{{ v.main_image.thumb.url }}"
-                 alt=""
-                 style="width:100%; height:160px; object-fit:cover; border-radius:12px;">
-          {% else %}
-            <img src="{{ v.main_image.image.url }}"
-                 alt=""
-                 style="width:100%; height:160px; object-fit:cover; border-radius:12px;">
-          {% endif %}
-        {% else %}
-          <div style="width:100%; height:160px; background:#eee; border-radius:12px;"></div>
-        {% endif %}
+  <ul class="card-grid">
+    {% for v in vehicles %}
+      <li class="card">
 
-        <div style="margin-top:10px;">
-          <div style="font-weight:bold; font-size:16px;">
-            {{ v.title }}
+        <!-- 画像は詳細へ -->
+        <a class="card-link" href="{% url 'vehicle_detail' v.id %}">
+          <div class="card-media">
+            {% if v.main_image %}
+              {% if v.main_image.thumb %}
+                <img class="card-img" src="{{ v.main_image.thumb.url }}" alt="">
+              {% else %}
+                <img class="card-img" src="{{ v.main_image.image.url }}" alt="">
+              {% endif %}
+            {% else %}
+              <div class="card-img card-img--placeholder"></div>
+            {% endif %}
+          </div>
+        </a>
+
+        <div class="card-body">
+
+          <!-- タイトルも詳細へ -->
+          <div class="card-title">
+            <a class="card-title-link" href="{% url 'vehicle_detail' v.id %}">
+              {{ v.title }}
+            </a>
           </div>
 
-          <div style="opacity:0.8; font-size:13px;">
+          <div class="card-subtitle">
             {{ v.model.maker }} {{ v.model.name }}
           </div>
-        </div>
-      </a>
-    </li>
-  {% empty %}
-    <li>No vehicles yet.</li>
-  {% endfor %}
-</ul>
 
+          <!-- プロフィールリンク -->
+          <div class="card-user">
+            by
+            <a href="{% url 'profile_detail' v.owner.username %}"
+               class="card-user-link">
+              {{ v.owner.username }}
+            </a>
+          </div>
+
+          <div class="card-stats">
+            <span class="card-stat">👍 {{ v.like_count|default:0 }}</span>
+          </div>
+
+        </div>
+
+      </li>
+    {% empty %}
+      <li class="empty">No vehicles yet.</li>
+    {% endfor %}
+  </ul>
+
+</div>
 {% endblock %}

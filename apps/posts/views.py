@@ -46,10 +46,11 @@ def _sync_post_main_image(post):
     post.main_image = first
     post.save(update_fields=["main_image"])
 
+
 @login_required
 def post_create(request):
     if request.method == "POST":
-        form = PostForm(request.POST, request.FILES)
+        form = PostForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             with transaction.atomic():
                 post = form.save(commit=False)
@@ -71,20 +72,40 @@ def post_create(request):
 
             return redirect("post_confirm", pk=post.pk)
     else:
-        form = PostForm()
+        form = PostForm(user=request.user)
 
     return render(request, "posts/post_form.html", {"form": form})
 
 
-
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import Count
 
 def post_list(request):
-    posts = (
+    posts = list(
         Post.objects
-        .select_related("author", "main_image")  # 必要なら author
+        .select_related("author", "main_image")
         .order_by("-created_at")
     )
+
+    # ✅ Like数をまとめて集計（N+1回避）
+    ct = ContentType.objects.get_for_model(Post)
+
+    like_map = dict(
+        Reaction.objects.filter(
+            reaction_type=ReactionType.LIKE,
+            content_type=ct,
+            object_id__in=[p.id for p in posts],
+        )
+        .values("object_id")
+        .annotate(c=Count("id"))
+        .values_list("object_id", "c")
+    )
+
+    for p in posts:
+        p.like_count = like_map.get(p.id, 0)
+
     return render(request, "posts/post_list.html", {"posts": posts})
+
 
 def post_detail(request, pk: int):
     post = get_object_or_404(
@@ -131,7 +152,12 @@ def post_edit(request, pk: int):
         return HttpResponseForbidden("Not allowed")
 
     if request.method == "POST":
-        form = PostForm(request.POST, request.FILES, instance=post)
+        if request.method == "POST":
+            form = PostForm(request.POST, request.FILES, instance=post, user=request.user)
+            if form.is_valid():
+                ...
+        else:
+            form = PostForm(instance=post, user=request.user)
         if form.is_valid():
             with transaction.atomic():
                 post = form.save(commit=False)
@@ -191,7 +217,12 @@ def post_edit(request, pk: int):
             messages.success(request, "投稿を更新しました。")
             return redirect("post_detail", pk=post.pk)
     else:
-        form = PostForm(instance=post)
+        if request.method == "POST":
+            form = PostForm(request.POST, request.FILES, instance=post, user=request.user)
+            if form.is_valid():
+                ...
+        else:
+            form = PostForm(instance=post, user=request.user)
 
     post = (
         Post.objects

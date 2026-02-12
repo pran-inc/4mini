@@ -2,49 +2,69 @@
 {% block title %}Posts{% endblock %}
 {% block content %}
 
-<h1>Posts</h1>
+<div class="page">
 
-<ul style="
-  list-style:none;
-  padding:0;
-  margin:0;
-  display:grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap:16px;
-">
-  {% for post in posts %}
-    <li style="border:1px solid #ddd; border-radius:14px; padding:12px; background:#fff;">
-      <a href="{% url 'post_detail' post.id %}" style="text-decoration:none; color:inherit;">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Posts</h1>
+      <p class="muted">投稿一覧です。</p>
+    </div>
+  </div>
 
-        {% if post.main_image %}
-          {% if post.main_image.thumb %}
-            <img src="{{ post.main_image.thumb.url }}" alt=""
-                 style="width:100%; height:160px; object-fit:cover; border-radius:12px;">
-          {% else %}
-            <img src="{{ post.main_image.image.url }}" alt=""
-                 style="width:100%; height:160px; object-fit:cover; border-radius:12px;">
+  <ul class="card-grid">
+    {% for post in posts %}
+      <li class="card">
+
+        <!-- 画像は投稿詳細へ -->
+        <a class="card-link" href="{% url 'post_detail' post.id %}">
+          <div class="card-media">
+            {% if post.main_image %}
+              {% if post.main_image.thumb %}
+                <img class="card-img" src="{{ post.main_image.thumb.url }}" alt="">
+              {% else %}
+                <img class="card-img" src="{{ post.main_image.image.url }}" alt="">
+              {% endif %}
+            {% else %}
+              <div class="card-img card-img--placeholder"></div>
+            {% endif %}
+          </div>
+        </a>
+
+        <div class="card-body">
+          <!-- タイトルも投稿詳細へ（※入れ子にならない） -->
+          <div class="card-title">
+            <a class="card-title-link" href="{% url 'post_detail' post.id %}">
+              {{ post.title }}
+            </a>
+          </div>
+
+          <!-- ユーザーはプロフィールへ -->
+          <div class="card-user">
+            by
+            <a href="{% url 'profile_detail' post.author.username %}"
+               class="card-user-link">
+              {{ post.author.username }}
+            </a>
+          </div>
+          <div class="card-stats">
+            <span class="card-stat">👍 {{ post.like_count|default:0 }}</span>
+          </div>
+
+          {% if post.body %}
+            <div class="card-text">
+              {{ post.body }}
+            </div>
           {% endif %}
-        {% else %}
-          <div style="width:100%; height:160px; background:#eee; border-radius:12px;"></div>
-        {% endif %}
 
-        <div style="margin-top:10px;">
-          <div class="post-card" style="font-weight:bold; font-size:16px;">
-            {{ post.title }}
-          </div>
-          <p class="post-body">
-            {{ post.body }}
-          </p>
-          <div style="opacity:0.8; font-size:13px;">
-            {{ post.created_at }}
-          </div>
+          <div class="card-meta">{{ post.created_at }}</div>
         </div>
 
-      </a>
-    </li>
-  {% empty %}
-    <li>No posts yet.</li>
-  {% endfor %}
-</ul>
+      </li>
+    {% empty %}
+      <li class="empty">No posts yet.</li>
+    {% endfor %}
+  </ul>
+
+</div>
 
 {% endblock %}

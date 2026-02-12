@@ -1,85 +1,138 @@
 {% extends "base.html" %}
 {% block title %}Edit Vehicle{% endblock %}
 {% block content %}
-<h1>Edit Vehicle</h1>
 
-<div style="margin: 12px 0 18px 0; padding: 12px 14px; background: #f6f7f9; border-radius: 10px;">
-  <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+<div class="page">
+  <div class="page-header">
     <div>
-      <strong>Step2：詳細・画像・パーツ編集</strong><br>
-      <span style="color:#555;">ここで情報を充実させるほど、検索にも強くなります。</span>
+      <h1 class="page-title">Edit Vehicle</h1>
+      <p class="muted">車両ページの内容を編集できます。</p>
     </div>
-    <div>
-      <a href="{% url 'vehicle_detail' vehicle.id %}">公開ページを見る →</a>
+
+    <div class="page-actions">
+      <a class="btn btn-ghost" href="{% url 'vehicle_detail' vehicle.id %}">公開ページを見る →</a>
+      <a class="btn btn-ghost" href="{% url 'vehicle_detail' vehicle.id %}">Back</a>
+    </div>
+  </div>
+
+  <div class="notice-card">
+    <div class="notice-card__row">
+      <div>
+        <div class="notice-card__title">Step2：詳細・画像・パーツ編集</div>
+        <div class="notice-card__desc">ここで情報を充実させるほど、検索にも強くなります。</div>
+      </div>
+      <div class="notice-card__right">
+        <a href="{% url 'vehicle_detail' vehicle.id %}">公開ページを見る →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">基本情報</h2>
+
+    <form method="post" enctype="multipart/form-data" id="vehicle-edit-form" class="form">
+      {% csrf_token %}
+
+      <div class="form-card">
+        {% for field in form.visible_fields %}
+          {% if field.name != "images" %}
+            <p>
+              {{ field.label_tag }}<br>
+              {{ field }}
+              {{ field.errors }}
+              {% if field.help_text %}
+                <small class="muted">{{ field.help_text }}</small>
+              {% endif %}
+            </p>
+          {% endif %}
+        {% endfor %}
+
+        {% if form.non_field_errors %}
+          <div class="form-error">{{ form.non_field_errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="section-divider"></div>
+
+      <h2 class="section-title">Images</h2>
+      <p class="help">
+        ドラッグで並び替え（最大10枚）<br>
+        <strong>一番左の画像が自動でメイン</strong>になります（選択は不要）
+      </p>
+
+      <input type="hidden" name="image_order_json" id="image_order_json" value="[]">
+
+      <div id="image-grid" class="image-grid">
+        {% for img in vehicle.images.all %}
+          <div class="img-card" draggable="true" data-id="{{ img.id }}">
+            {% if img.thumb %}
+              <img class="img-card__img" src="{{ img.thumb.url }}" alt="">
+            {% else %}
+              <img class="img-card__img" src="{{ img.image.url }}" alt="">
+            {% endif %}
+
+            <div class="img-card__meta">
+              <div class="js-main-badge img-card__badge"></div>
+
+              <label class="img-card__delete">
+                <input type="checkbox" name="delete_image_ids" value="{{ img.id }}" class="js-delete">
+                Delete
+              </label>
+            </div>
+
+            <div class="img-card__hint">Drag to reorder</div>
+          </div>
+        {% empty %}
+          <div class="empty">No images yet.</div>
+        {% endfor %}
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">Add Images</h3>
+        {% if form.images.help_text %}
+          <p class="help">{{ form.images.help_text }}</p>
+        {% endif %}
+
+        {{ form.images.errors }}
+        <div class="file-row">
+          {{ form.images }}
+        </div>
+
+        <div id="preview-vehicle-images-add" class="preview"></div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Save</button>
+        <span class="muted">※ 今日は途中まででもOK。保存すれば、続きは後で編集できます。</span>
+      </div>
+    </form>
+  </div>
+
+  <hr class="hr">
+
+  <div class="section">
+    <div class="section-header">
+      <h2 class="section-title">Parts</h2>
+      <p class="muted">カテゴリ→候補選択 or 自由入力で追加できます。</p>
+    </div>
+
+    <div id="js-part-form-wrap" class="form-card">
+      {% include "vehicles/_part_form.html" with form=part_form vehicle=vehicle %}
+    </div>
+
+    <ul id="js-part-list" class="part-list">
+      {% for vp in vehicle_parts %}
+        {% include "vehicles/_part_row.html" with vp=vp %}
+      {% empty %}
+        <li class="empty">まだパーツがありません</li>
+      {% endfor %}
+    </ul>
+
+    <div class="danger-zone">
+      <a class="btn btn-danger-ghost" href="{% url 'vehicle_delete_confirm' vehicle.id %}">この車両を削除</a>
     </div>
   </div>
 </div>
-
-
-<p><a href="{% url 'vehicle_detail' vehicle.id %}">Back</a></p>
-
-<form method="post" enctype="multipart/form-data" id="vehicle-edit-form">
-  {% csrf_token %}
-
-  {{ form.as_p }}
-
-  <h2>Images</h2>
-  <p style="opacity:0.8;">
-    ドラッグで並び替え（最大10枚）<br>
-    <strong>一番左の画像が自動でメイン</strong>になります（選択は不要）
-  </p>
-
-  <input type="hidden" name="image_order_json" id="image_order_json" value="[]">
-
-  <div id="image-grid" style="
-    display:grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap:12px;
-    margin-bottom:12px;
-  ">
-    {% for img in vehicle.images.all %}
-      <div class="img-card"
-           draggable="true"
-           data-id="{{ img.id }}"
-           style="
-             border:2px solid #ddd;
-             padding:8px;
-             border-radius:10px;
-             background:#fff;
-             cursor:grab;
-           ">
-        {% if img.thumb %}
-          <img src="{{ img.thumb.url }}" alt=""
-               style="width:100%; height:140px; object-fit:cover; border-radius:8px;">
-        {% else %}
-          <img src="{{ img.image.url }}" alt=""
-               style="width:100%; height:140px; object-fit:cover; border-radius:8px;">
-        {% endif %}
-
-        <div style="margin-top:6px; display:flex; justify-content:space-between; gap:8px; align-items:center;">
-          <div class="js-main-badge" style="font-size:12px; opacity:0.75;"></div>
-
-          <label style="font-size:12px;">
-            <input type="checkbox" name="delete_image_ids" value="{{ img.id }}" class="js-delete">
-            Delete
-          </label>
-        </div>
-
-        <div style="opacity:0.6; font-size:11px; margin-top:4px;">
-          Drag to reorder
-        </div>
-      </div>
-    {% empty %}
-      <p>No images yet.</p>
-    {% endfor %}
-  </div>
-
-  <h3>Add Images</h3>
-  <p>{{ form.images.help_text }}</p>
-  {{ form.images.errors }}
-  {{ form.images }}
-
-  <div id="preview-vehicle-images-add" style="max-width:920px; margin-top:10px;"></div>
 
 
 <script>
@@ -92,36 +145,6 @@
   if (window.bindFilePreviews) window.bindFilePreviews(document);
 })();
 </script>
-
-
-  <div style="margin-top:16px;">
-    <button type="submit">Save</button>
-  </div>
-</form>
-
-<p style="color:#777; font-size:0.95em; margin-top:10px;">
-  ※ 今日は途中まででもOK。保存すれば、続きは後で編集できます。
-</p>
-
-
-<hr>
-<h2>Parts</h2>
-
-<div id="js-part-form-wrap">
-  {% include "vehicles/_part_form.html" with form=part_form vehicle=vehicle %}
-</div>
-
-<ul id="js-part-list" style="list-style:none; padding:0; margin:12px 0; display:grid; gap:10px;">
-  {% for vp in vehicle_parts %}
-    {% include "vehicles/_part_row.html" with vp=vp %}
-  {% empty %}
-    <li style="opacity:0.7;">まだパーツがありません</li>
-  {% endfor %}
-</ul>
-
-<p style="margin-top:18px;">
-  <a href="{% url 'vehicle_delete_confirm' vehicle.id %}">この車両を削除</a>
-</p>
 
 <script>
 (function() {
@@ -144,13 +167,9 @@
   function paintMainUI() {
     const cs = cards();
     cs.forEach((c, idx) => {
-      // 左端だけ枠線＝メイン
       c.style.border = (idx === 0) ? "2px solid #111" : "2px solid #ddd";
-
       const badge = c.querySelector(".js-main-badge");
-      if (badge) {
-        badge.textContent = (idx === 0) ? "★ Main (leftmost)" : "";
-      }
+      if (badge) badge.textContent = (idx === 0) ? "★ Main (leftmost)" : "";
     });
   }
 
@@ -159,7 +178,6 @@
       const chk = card.querySelector("input.js-delete");
       if (!chk) return;
 
-      // 既存バッジ消す
       const old = card.querySelector(".js-delete-badge");
       if (old) old.remove();
 
@@ -183,12 +201,10 @@
     });
   }
 
-  // 初期
   serializeOrder();
   paintMainUI();
   paintDeleteState();
 
-  // Deleteチェック反映
   grid.addEventListener("change", (e) => {
     if (e.target && e.target.classList && e.target.classList.contains("js-delete")) {
       paintDeleteState();
@@ -201,7 +217,6 @@
     const card = e.target.closest(".img-card");
     if (!card) return;
 
-    // 削除予定はドラッグさせない
     const chk = card.querySelector("input.js-delete");
     if (chk && chk.checked) return;
 
@@ -214,7 +229,6 @@
     const over = e.target.closest(".img-card");
     if (!over || !dragged || over === dragged) return;
 
-    // 削除予定のカード上では並べ替えしない
     const overChk = over.querySelector("input.js-delete");
     if (overChk && overChk.checked) return;
 
@@ -251,7 +265,6 @@
     return el ? el.value : "";
   }
 
-  // ======= Part form UI init (カテゴリ→候補→自由入力 自動ON+フォーカス) =======
   function initPartForm(container) {
     const categoryEl = container.querySelector("#id_category");
     const partEl = container.querySelector("#id_part");
@@ -377,7 +390,6 @@
       setPartOptions(data.results || []);
     }
 
-    // bind (二重bind防止のため、既にbindしてたらスキップ)
     if (!container.dataset.bound) {
       container.dataset.bound = "1";
 
@@ -395,14 +407,11 @@
       });
     }
 
-    // initial
     fetchParts(categoryEl.value);
   }
 
-  // 最初の描画で初期化
   initPartForm(wrap);
 
-  // ======= AJAX: 追加 =======
   document.addEventListener("submit", async (e) => {
     const form = e.target.closest("#js-part-form");
     if (!form) return;
@@ -421,20 +430,19 @@
 
     if (!data.ok) {
       wrap.innerHTML = data.form_html;
-      initPartForm(wrap); // ✅差し替え後に再初期化
+      initPartForm(wrap);
       return;
     }
 
     wrap.innerHTML = data.form_html;
-    initPartForm(wrap); // ✅差し替え後に再初期化
+    initPartForm(wrap);
 
     list.insertAdjacentHTML("afterbegin", data.row_html);
 
-    const empty = list.querySelector("li[style*='まだパーツ']");
+    const empty = list.querySelector("li.empty");
     if (empty) empty.remove();
   });
 
-  // ======= AJAX: 削除 =======
   document.addEventListener("click", async (e) => {
     const btn = e.target.closest(".js-part-delete");
     if (!btn) return;
@@ -452,7 +460,7 @@
     if (data.ok) {
       li.remove();
       if (!list.querySelector("li[data-part-id]")) {
-        list.insertAdjacentHTML("beforeend", "<li style='opacity:0.7;'>まだパーツがありません</li>");
+        list.insertAdjacentHTML("beforeend", "<li class='empty'>まだパーツがありません</li>");
       }
     }
   });

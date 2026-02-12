@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.text import slugify
 
+from apps.vehicles.models import UserVehicle
 from .models import Post, Tag
 
 
@@ -78,6 +79,38 @@ class PostForm(forms.ModelForm):
     class Meta:
         model = Post
         fields = ["vehicle", "title", "body", "tags_text", "images"]  # tags を外す
+
+    def __init__(self, *args, user=None, **kwargs):
+        """
+        user を受け取って vehicle の選択肢を「自分の車両だけ」に制限する
+        """
+        super().__init__(*args, **kwargs)
+        self._user = user
+
+        # vehicle は任意(null/blank=True)なので、選択肢が空でもOK
+        if "vehicle" in self.fields:
+            if user and getattr(user, "is_authenticated", False):
+                self.fields["vehicle"].queryset = UserVehicle.objects.filter(owner=user).order_by("-created_at")
+            else:
+                self.fields["vehicle"].queryset = UserVehicle.objects.none()
+
+    def clean_vehicle(self):
+        """
+        POSTで不正に他人のvehicle_idを送られても弾く（サーバー側防御）
+        """
+        v = self.cleaned_data.get("vehicle")
+        user = getattr(self, "_user", None)
+
+        if v is None:
+            return None
+
+        if not user or not getattr(user, "is_authenticated", False):
+            raise ValidationError("車両の選択が不正です。")
+
+        if v.owner_id != user.id:
+            raise ValidationError("自分の車両のみ選択できます。")
+
+        return v
 
     def save(self, commit=True):
         post = super().save(commit=commit)
