@@ -2,8 +2,7 @@
 
 # from __future__ import annotations
 import os, json
-from dataclasses import dataclass
-from typing import Iterable, Sequence, Optional, List
+from typing import Iterable, Sequence, Optional, List, NamedTuple
 from django.core.files.base import ContentFile
 from apps.common.models import TempUpload
 
@@ -48,8 +47,7 @@ def delete_objects_with_files(objs: Iterable, field_names: Sequence[str] = ("thu
 
 
 
-@dataclass
-class TempFileResult:
+class TempFileResult(NamedTuple):
     temp: Optional[TempUpload]
     temp_id: Optional[int]
 
